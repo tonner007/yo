@@ -41,15 +41,15 @@ export default function NetworkSelector({ onNetworkChange }) {
       {/* Trigger */}
       <div
         onClick={() => setOpen((v) => !v)}
-        className="stat-card top-card cursor-pointer hover:border-muted-foreground transition-colors select-none"
+        className="stat-card top-card cursor-pointer hover:border-muted-foreground transition-colors select-none position-card-content"
       >
         <div className="flex items-center gap-1.5 mb-3">
           <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">USDC</span>
         </div>
-        <div className="flex flex-col flex-grow justify-between">
-          <div className="mt-auto">
-            <div className="text-2xl font-bold text-foreground">{current.label}</div>
-            <div className="flex items-center justify-between mt-1">
+        <div className="flex flex-col flex-grow">
+          <div className="flex flex-col justify-between flex-grow">
+            <div className="text-2xl font-bold text-foreground mb-2">{current.label}</div>
+            <div className="flex items-center justify-between mt-auto">
               <div className="flex items-center gap-3">
                 <div className="asset-icon w-6 h-6">
                   <img

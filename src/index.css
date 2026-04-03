@@ -6,15 +6,23 @@
 
 @layer components {
   .stat-card {
-    @apply bg-card border border-border rounded-xl p-5 min-h-[120px] flex flex-col justify-between;
-  }
-  
-  .top-cards {
-    @apply grid grid-cols-2 gap-4;
+    @apply bg-card border border-border rounded-xl p-5 min-h-[120px] flex flex-col justify-between h-full;
   }
   
   .top-card {
     @apply min-h-[100px] flex flex-col justify-between h-full;
+  }
+  
+  .positions-row {
+    @apply grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch;
+  }
+  
+  .position-card {
+    @apply h-full;
+  }
+  
+  .position-card-content {
+    @apply flex flex-col flex-1 h-full;
   }
 }
 
