@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Connection Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+<h1>🔗 Connection Test</h1>
+
+<div id="results">
+Testing connections...
+</div>
+
+<script>
+const tests = [
+    { name: 'IPv4 port 8080', url: 'http://46.225.177.64:8080/' },
+    { name: 'IPv6 port 8080', url: 'http://[2a01:4f8:1c19:713e::1]:8080/' },
+    { name: 'Domain port 8080', url: 'http://tonner.my.id:8080/' },
+    { name: 'Domain (Cloudflare)', url: 'http://tonner.my.id/' }
+];
+
+async function runTests() {
+    let resultsHtml = '';
+    
+    for (const test of tests) {
+        resultsHtml += `<strong>${test.name}:</strong> `;
+        
+        try {
+            const response = await fetch(test.url, { mode: 'no-cors' });
+            resultsHtml += `<span class="success">✅ Accessible</span><br>`;
+        } catch (err) {
+            resultsHtml += `<span class="error">❌ ${err.message}</span><br>`;
+        }
+    }
+    
+    document.getElementById('results').innerHTML = resultsHtml;
+    
+    // Also test main.jsx MIME type
+    try {
+        const jsResponse = await fetch('http://46.225.177.64:8080/src/main.jsx');
+        const contentType = jsResponse.headers.get('content-type');
+        document.getElementById('results').innerHTML += 
+            `<br><strong>main.jsx MIME type:</strong> ${contentType}<br>`;
+    } catch (err) {
+        // Ignore
+    }
+}
+
+runTests();
+
+// Auto-redirect to first working URL
+setTimeout(() => {
+    const working = tests.find(t => !document.body.innerText.includes(`❌`));
+    if (working) {
+        document.getElementById('results').innerHTML += 
+            `<br><a href="${working.url}">Open ${working.name}</a>`;
+    }
+}, 2000);
+</script>
+
+<noscript>
+<h2>Enable JavaScript for connection tests</h2>
+</noscript>
+
+<div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
+<h2>📋 If nothing works:</h2>
+<ol>
+    <li><strong>Firewall issue:</strong> Port 8080 may be blocked</li>
+    <li><strong>Network routing:</strong> Your ISP may block certain IPs</li>
+    <li><strong>Try different network:</strong> Mobile hotspot, different WiFi</li>
+    <li><strong>Use Cloudflare:</strong> Wait for cache to expire on tonner.my.id</li>
+</ol>
+
+<p><strong>Quick test from your terminal:</strong></p>
+<pre>
+curl -v http://46.225.177.64:8080
+ping 46.225.177.64
+</pre>
+</div>
+</body>
+</html>

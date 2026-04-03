@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cloudflare Debug</title>
+    <style>
+        body { font-family: monospace; white-space: pre; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+<h1>🔍 Cloudflare Debug</h1>
+
+<script>
+// Test 1: What does Cloudflare return for main.jsx?
+fetch('/src/main.jsx')
+    .then(async r => {
+        const contentType = r.headers.get('content-type');
+        const text = await r.text();
+        const first100 = text.substring(0, 100);
+        
+        document.write(`=== main.jsx ===\n`);
+        document.write(`Status: ${r.status}\n`);
+        document.write(`Content-Type: ${contentType}\n`);
+        document.write(`Length: ${text.length} bytes\n`);
+        document.write(`First 100 chars: ${first100}\n\n`);
+        
+        if (contentType.includes('html') || first100.includes('<!DOCTYPE')) {
+            document.write(`<span class="error">❌ CLOUDFLARE ERROR: Returning HTML instead of JS!</span>\n`);
+            document.write(`This is why you see "Unexpected token '<'"\n\n`);
+        } else {
+            document.write(`<span class="success">✅ Content-Type looks correct</span>\n\n`);
+        }
+    })
+    .catch(err => {
+        document.write(`❌ Fetch failed: ${err.message}\n\n`);
+    });
+
+// Test 2: Check multiple resources
+const resources = [
+    '/src/main.jsx',
+    '/@vite/client',
+    '/',
+    '/fresh',
+    '/new/'
+];
+
+resources.forEach(url => {
+    fetch(url)
+        .then(r => {
+            const ct = r.headers.get('content-type') || 'none';
+            document.write(`${url}: ${r.status} (${ct})\n`);
+        })
+        .catch(err => {
+            document.write(`${url}: ERROR - ${err.message}\n`);
+        });
+});
+
+document.write(`\n=== BROWSER INFO ===\n`);
+document.write(`URL: ${window.location.href}\n`);
+document.write(`User Agent: ${navigator.userAgent}\n`);
+
+// Auto-redirect to IP if Cloudflare is broken
+setTimeout(() => {
+    if (document.body.innerText.includes('CLOUDFLARE ERROR')) {
+        document.write(`\n\n🔧 <strong>TRY DIRECT IP:</strong>\n`);
+        document.write(`Add to your /etc/hosts file:\n`);
+        document.write(`2a01:4f8:1c19:713e::1 tonner.my.id\n\n`);
+        document.write(`Then reload: <a href="http://tonner.my.id">http://tonner.my.id</a>\n`);
+    }
+}, 1000);
+</script>
+
+<noscript>
+<h2>Enable JavaScript to see debug info</h2>
+</noscript>
+
+<div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
+<h2>📋 MANUAL FIX REQUIRED:</h2>
+<p>Cloudflare is returning <strong>HTML instead of JavaScript</strong> for .jsx files.</p>
+<p><strong>You must:</strong></p>
+<ol>
+    <li><strong>Edit /etc/hosts on YOUR computer</strong> (not server):
+        <pre>2a01:4f8:1c19:713e::1 tonner.my.id</pre>
+    </li>
+    <li><strong>Or wait 30-60 minutes</strong> for Cloudflare cache to expire</li>
+    <li><strong>Or purge Cloudflare cache</strong> in dashboard</li>
+</ol>
+
+<p><strong>This is a Cloudflare problem, not our server.</strong> Server returns correct content-type, Cloudflare corrupts it.</p>
+</div>
+</body>
+</html>

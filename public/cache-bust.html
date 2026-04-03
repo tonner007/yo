@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cache Bust - Force Refresh</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script>
+        // Force clear all caches
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => caches.delete(name));
+                console.log('Cleared caches:', names);
+            });
+        }
+        
+        // Clear localStorage and sessionStorage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Redirect to main app with cache bust
+        const timestamp = new Date().getTime();
+        setTimeout(() => {
+            window.location.href = `/?v=${timestamp}`;
+        }, 1000);
+    </script>
+</head>
+<body>
+    <h1>🔄 Clearing Cache & Refreshing...</h1>
+    <p>Redirecting to YO App with cache bust...</p>
+    <p>If not redirected in 3 seconds, <a href="/">click here</a></p>
+</body>
+</html>

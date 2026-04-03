@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NUCLEAR Cache Bust</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #000; color: #0f0; }
+        .nuke { color: #f00; font-weight: bold; }
+    </style>
+    <script>
+        // NUCLEAR approach: Load app in iframe with EVERY cache busting technique
+        function nuclearBust() {
+            const techniques = [];
+            const now = Date.now();
+            const rand = Math.random().toString(36).substr(2);
+            
+            // Generate 50 different URLs
+            for (let i = 0; i < 50; i++) {
+                techniques.push(`/?__cache_bust_${i}_${now}_${rand}=1`);
+            }
+            
+            // Also try /live/ path
+            techniques.push(`/live/?v=${now}`);
+            
+            console.log('NUCLEAR cache bust started with', techniques.length, 'techniques');
+            
+            // Try each technique in hidden iframes
+            let index = 0;
+            function tryTechnique() {
+                if (index < techniques.length) {
+                    const url = techniques[index];
+                    console.log(`Trying ${index + 1}/${techniques.length}: ${url}`);
+                    
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.src = url;
+                    iframe.onload = function() {
+                        console.log(`✅ Technique ${index + 1} LOADED`);
+                        // SUCCESS - redirect main window
+                        window.location.href = url;
+                    };
+                    iframe.onerror = function() {
+                        console.log(`❌ Technique ${index + 1} failed`);
+                        index++;
+                        setTimeout(tryTechnique, 100);
+                    };
+                    document.body.appendChild(iframe);
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        '<div class="nuke">☢️ ALL TECHNIQUES FAILED</div>' +
+                        '<p>Cloudflare is completely blocking. Last resort:</p>' +
+                        '<p><a href="/live/">Try /live/ path</a> (special bypass)</p>';
+                }
+            }
+            
+            tryTechnique();
+        }
+        
+        // Also try to detect if Cloudflare is serving error page
+        function detectCloudflareError() {
+            fetch('/')
+                .then(r => r.text())
+                .then(html => {
+                    const isError = html.includes('cf-error') || 
+                                   html.includes('Cloudflare') ||
+                                   html.length < 1000;
+                    
+                    if (isError) {
+                        document.getElementById('cf-status').innerHTML = 
+                            '❌ Cloudflare error page detected';
+                    } else {
+                        document.getElementById('cf-status').innerHTML = 
+                            '✅ HTML looks normal (' + html.length + ' bytes)';
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('cf-status').innerHTML = 
+                        '❌ Fetch failed: ' + err.message;
+                });
+        }
+        
+        window.addEventListener('load', function() {
+            console.log('=== NUCLEAR CACHE BUST ACTIVATED ===');
+            detectCloudflareError();
+            setTimeout(nuclearBust, 1000);
+        });
+    </script>
+</head>
+<body>
+    <h1>☢️ NUCLEAR CLOUDFLARE CACHE BUST</h1>
+    <p>This uses extreme techniques to bypass Cloudflare caching.</p>
+    
+    <div id="cf-status">Checking Cloudflare status...</div>
+    <div id="result" style="margin: 20px 0; padding: 20px; border: 2px solid #f00;">
+        Starting nuclear cache bust...
+    </div>
+    
+    <h2>🚀 DIRECT LINKS (try in order):</h2>
+    <ol>
+        <li><a href="/live/" target="_blank">/live/</a> - Cloudflare bypass path</li>
+        <li><a href="/?__nuke_cache=1" target="_blank">/?__nuke_cache=1</a></li>
+        <li><a href="/?__cf_bypass=1" target="_blank">/?__cf_bypass=1</a></li>
+        <li><a href="/?force_fresh=1" target="_blank">/?force_fresh=1</a></li>
+    </ol>
+    
+    <h2>📋 MANUAL FIX:</h2>
+    <p>If nothing works, wait 30 minutes for Cloudflare cache to expire naturally.</p>
+    <p>Or add this to URL: <code>?__cache_bust_<?php echo time(); ?>_<?php echo rand(1000,9999); ?>=1</code></p>
+    
+    <script>
+        // Auto-generate some links
+        const linksDiv = document.createElement('div');
+        linksDiv.innerHTML = '<h3>Auto-generated cache bust links:</h3>';
+        for (let i = 0; i < 5; i++) {
+            const ts = Date.now() + i;
+            const rand = Math.random().toString(36).substr(2, 8);
+            const link = `/?__cb_${ts}_${rand}=1`;
+            linksDiv.innerHTML += `<p><a href="${link}" target="_blank">${link}</a></p>`;
+        }
+        document.body.appendChild(linksDiv);
+    </script>
+</body>
+</html>

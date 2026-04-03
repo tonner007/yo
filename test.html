@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test YO SDK</title>
+</head>
+<body>
+    <h1>Test YO SDK TVL Loading</h1>
+    <div id="tvl">Loading TVL...</div>
+    
+    <script type="module">
+        import { getTotalTvl } from './src/utils/getTotalTvl.js';
+        
+        async function loadTVL() {
+            try {
+                const result = await getTotalTvl();
+                document.getElementById('tvl').innerHTML = `TOTAL TVL: ${result.formatted}`;
+                console.log('TVL loaded:', result);
+            } catch (error) {
+                console.error('Failed to load TVL:', error);
+                document.getElementById('tvl').innerHTML = 'Error loading TVL';
+            }
+        }
+        
+        loadTVL();
+    </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>App Status Check</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .test { margin: 10px 0; padding: 10px; border-left: 4px solid #666; }
+        .success { border-color: #0f0; background: #e8f5e8; }
+        .error { border-color: #f00; background: #ffe8e8; }
+        .warning { border-color: #ff0; background: #fff8e8; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔄 App Status Diagnostic</h1>
+    
+    <div class="test">
+        <h2>1. Connection Test</h2>
+        <div id="connection-test">Testing...</div>
+    </div>
+    
+    <div class="test">
+        <h2>2. JavaScript Test</h2>
+        <div id="js-test">Testing...</div>
+    </div>
+    
+    <div class="test">
+        <h2>3. React Test</h2>
+        <div id="react-test">Testing...</div>
+    </div>
+    
+    <div class="test">
+        <h2>4. Console Errors (Live)</h2>
+        <div id="console-errors">No errors yet...</div>
+    </div>
+    
+    <div class="test">
+        <h2>5. Quick Actions</h2>
+        <button onclick="window.location.href='/'">Back to App</button>
+        <button onclick="hardReload()">Hard Reload</button>
+        <button onclick="clearCache()">Clear All Cache</button>
+        <button onclick="testDeposit()">Test Deposit Modal</button>
+    </div>
+    
+    <script>
+        // Capture console errors
+        const errors = [];
+        const originalError = console.error;
+        console.error = function(...args) {
+            errors.push({
+                time: new Date().toISOString(),
+                message: args.join(' ')
+            });
+            originalError.apply(console, args);
+            updateConsoleErrors();
+        };
+        
+        // Test 1: Connection
+        fetch('/')
+            .then(r => {
+                document.getElementById('connection-test').innerHTML = 
+                    `✅ HTTP ${r.status} - Connected`;
+                document.getElementById('connection-test').className = 'test success';
+                return r.text();
+            })
+            .then(html => {
+                const hasReact = html.includes('react');
+                const hasRoot = html.includes('id="root"');
+                
+                document.getElementById('js-test').innerHTML = 
+                    `✅ HTML loaded (${html.length} bytes)<br>` +
+                    `${hasReact ? '✅ React detected' : '❌ React not found'}<br>` +
+                    `${hasRoot ? '✅ Root element found' : '❌ Root element missing'}`;
+                document.getElementById('js-test').className = 'test success';
+            })
+            .catch(err => {
+                document.getElementById('connection-test').innerHTML = 
+                    `❌ Connection failed: ${err.message}`;
+                document.getElementById('connection-test').className = 'test error';
+            });
+        
+        // Test 3: React
+        setTimeout(() => {
+            const reactTest = document.getElementById('react-test');
+            if (typeof React !== 'undefined') {
+                reactTest.innerHTML = '✅ React global object loaded';
+                reactTest.className = 'test success';
+            } else {
+                reactTest.innerHTML = '⚠️ React not in global scope (may be using modules)';
+                reactTest.className = 'test warning';
+            }
+        }, 1000);
+        
+        // Update console errors
+        function updateConsoleErrors() {
+            const errorsDiv = document.getElementById('console-errors');
+            if (errors.length === 0) {
+                errorsDiv.innerHTML = '✅ No console errors';
+                errorsDiv.className = 'test success';
+                return;
+            }
+            
+            let html = `<strong>${errors.length} error(s):</strong><br>`;
+            errors.slice(-5).forEach(err => {
+                html += `<span style="color:red">❌ ${err.time.split('T')[1].split('.')[0]} - ${err.message}</span><br>`;
+            });
+            
+            errorsDiv.innerHTML = html;
+            errorsDiv.className = 'test error';
+        }
+        
+        // Helper functions
+        function hardReload() {
+            window.location.href = `/?v=${Date.now()}`;
+        }
+        
+        function clearCache() {
+            if (caches && caches.keys) {
+                caches.keys().then(names => {
+                    names.forEach(name => caches.delete(name));
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    hardReload();
+                });
+            } else {
+                hardReload();
+            }
+        }
+        
+        function testDeposit() {
+            // Try to open deposit modal programmatically
+            if (typeof window.openDepositModal === 'function') {
+                window.openDepositModal();
+            } else {
+                // Simulate click on deposit button
+                const event = new CustomEvent('test-deposit');
+                window.dispatchEvent(event);
+                console.log('Deposit test event dispatched');
+            }
+        }
+        
+        // Auto-check every 2 seconds
+        setInterval(updateConsoleErrors, 2000);
+        
+        // Initial check
+        console.log('=== App Status Diagnostic Started ===');
+        console.log('URL:', window.location.href);
+        console.log('User Agent:', navigator.userAgent);
+    </script>
+    
+    <div class="test warning">
+        <h2>🔧 If App Crashed:</h2>
+        <ol>
+            <li><strong>Open Browser Console</strong> (F12 → Console) - check for red errors</li>
+            <li><strong>Check Network tab</strong> - look for failed resources (404, 500)</li>
+            <li><strong>Clear cache</strong> - use button above or Ctrl+Shift+Delete</li>
+            <li><strong>Try different port</strong>:
+                <br><a href="http://tonner.my.id:3000">Port 3000</a> (simple server, no cache)
+                <br><a href="http://tonner.my.id">Port 80</a> (original, may be cached)
+            </li>
+        </ol>
+    </div>
+</body>
+</html>

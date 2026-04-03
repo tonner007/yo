@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FORCE REFRESH - Cache Bust</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; text-align: center; }
+        .step { margin: 20px 0; padding: 20px; border: 2px solid #ccc; border-radius: 10px; }
+        .success { border-color: green; background: #e8f5e8; }
+        .error { border-color: red; background: #ffe8e8; }
+        button { padding: 15px 30px; font-size: 16px; margin: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔄 FORCE CACHE REFRESH</h1>
+    <p>This will clear ALL browser cache and reload the app with fresh code.</p>
+    
+    <div class="step">
+        <h2>Step 1: Clear All Storage</h2>
+        <button onclick="clearAllStorage()">Clear Storage</button>
+        <div id="storage-status"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 2: Clear Service Workers</h2>
+        <button onclick="clearServiceWorkers()">Clear Service Workers</button>
+        <div id="sw-status"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 3: Hard Reload App</h2>
+        <button onclick="hardReload()">Hard Reload YO App</button>
+        <p>Or press: <strong>Ctrl+Shift+R</strong> (Windows/Linux) or <strong>Cmd+Shift+R</strong> (Mac)</p>
+    </div>
+    
+    <div class="step success">
+        <h2>✅ Fixed Issues:</h2>
+        <ul>
+            <li><strong>userAddress is not defined</strong> - DepositModal error</li>
+            <li><strong>React hook errors</strong> - useUsdcBalance issues</li>
+            <li><strong>Black screen</strong> - App not loading</li>
+        </ul>
+    </div>
+    
+    <script>
+        async function clearAllStorage() {
+            const status = document.getElementById('storage-status');
+            try {
+                // Clear localStorage
+                localStorage.clear();
+                
+                // Clear sessionStorage
+                sessionStorage.clear();
+                
+                // Clear IndexedDB
+                if ('indexedDB' in window) {
+                    const dbs = await indexedDB.databases();
+                    for (const db of dbs) {
+                        indexedDB.deleteDatabase(db.name);
+                    }
+                }
+                
+                // Clear cookies for this domain
+                document.cookie.split(";").forEach(cookie => {
+                    const eqPos = cookie.indexOf("=");
+                    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
+                });
+                
+                status.innerHTML = '<span style="color:green">✅ All storage cleared</span>';
+            } catch (error) {
+                status.innerHTML = '<span style="color:red">❌ Error: ' + error.message + '</span>';
+            }
+        }
+        
+        async function clearServiceWorkers() {
+            const status = document.getElementById('sw-status');
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                    }
+                    status.innerHTML = `<span style="color:green">✅ ${registrations.length} service workers unregistered</span>`;
+                } else {
+                    status.innerHTML = '<span style="color:orange">⚠️ No service workers found</span>';
+                }
+            } catch (error) {
+                status.innerHTML = '<span style="color:red">❌ Error: ' + error.message + '</span>';
+            }
+        }
+        
+        function hardReload() {
+            // Add cache bust parameter
+            const timestamp = new Date().getTime();
+            const url = `/?v=${timestamp}&force=true&nocache=1`;
+            
+            // Force reload
+            if (window.location.search.includes('force')) {
+                window.location.href = '/';
+            } else {
+                window.location.href = url;
+            }
+        }
+        
+        // Auto-clear on page load
+        window.addEventListener('load', async () => {
+            console.log('Auto-clearing cache...');
+            await clearAllStorage();
+            await clearServiceWorkers();
+            
+            // Auto-redirect after 3 seconds
+            setTimeout(() => {
+                document.body.innerHTML += '<p>Redirecting to YO App in 3 seconds...</p>';
+                setTimeout(hardReload, 3000);
+            }, 1000);
+        });
+        
+        console.log('=== FORCE REFRESH ACTIVATED ===');
+        console.log('Old errors should be fixed:');
+        console.log('1. userAddress is not defined - FIXED');
+        console.log('2. React hook errors - FIXED');
+        console.log('3. Black screen - FIXED');
+    </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cloudflare Cache Bust</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script>
+        // Generate random version
+        const version = Date.now();
+        
+        // Try multiple cache busting techniques
+        const techniques = [
+            `/?v=${version}`,
+            `/?_=${version}`,
+            `/?cache=${version}`,
+            `/?timestamp=${version}`,
+            `/?nocache=1&v=${version}`
+        ];
+        
+        let currentTechnique = 0;
+        
+        function tryNext() {
+            if (currentTechnique < techniques.length) {
+                const url = techniques[currentTechnique];
+                console.log(`Trying: ${url}`);
+                
+                // Create hidden iframe to load with cache bust
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = url;
+                iframe.onload = function() {
+                    console.log(`Technique ${currentTechnique + 1} loaded`);
+                    setTimeout(() => {
+                        // Redirect main window
+                        window.location.href = url;
+                    }, 1000);
+                };
+                iframe.onerror = function() {
+                    console.log(`Technique ${currentTechnique + 1} failed`);
+                    currentTechnique++;
+                    setTimeout(tryNext, 500);
+                };
+                document.body.appendChild(iframe);
+            } else {
+                document.getElementById('status').innerHTML = 
+                    '<h2 style="color:red">❌ All cache bust techniques failed</h2>' +
+                    '<p>Cloudflare is aggressively caching. Try:</p>' +
+                    '<ol>' +
+                    '<li>Wait 5-10 minutes for Cloudflare cache to expire</li>' +
+                    '<li>Use incognito/private window</li>' +
+                    '<li>Different browser</li>' +
+                    '<li>Add random query param manually: ?v=' + Date.now() + '</li>' +
+                    '</ol>';
+            }
+        }
+        
+        // Start trying
+        window.addEventListener('load', function() {
+            document.getElementById('status').innerHTML = 
+                '<h2>🔄 Busting Cloudflare cache...</h2>' +
+                '<p>Trying different techniques to force fresh content.</p>';
+            setTimeout(tryNext, 1000);
+        });
+    </script>
+</head>
+<body>
+    <div id="status" style="padding: 40px; text-align: center;">
+        <h1>☁️ Cloudflare Cache Buster</h1>
+        <p>This page tries to force Cloudflare to serve fresh content.</p>
+        <p>If stuck, manually add <code>?v=123456789</code> to the URL.</p>
+    </div>
+    
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <h2>📋 Manual Cache Busting</h2>
+        <p>Add any of these to the URL:</p>
+        <ul>
+            <li><code>?v=<script>document.write(Date.now())</script></code></li>
+            <li><code>?_=<script>document.write(Date.now())</script></code></li>
+            <li><code>?cache=<script>document.write(Date.now())</script></code></li>
+            <li><code>?timestamp=<script>document.write(Date.now())</script></code></li>
+            <li><code>?nocache=1</code></li>
+        </ul>
+        
+        <h2>🔧 Quick Test Links</h2>
+        <p>
+            <a href="/?v=1">Test 1</a> | 
+            <a href="/?_=2">Test 2</a> | 
+            <a href="/?cache=3">Test 3</a> |
+            <a href="/?timestamp=4">Test 4</a>
+        </p>
+        
+        <h2>ℹ️ Why this happens</h2>
+        <p>Cloudflare caches content to improve performance. Sometimes it caches broken versions.</p>
+        <p><strong>It worked before</strong> because Cloudflare had a fresh cache. Now it has a stale/broken cache.</p>
+        <p><strong>Solution:</strong> Force cache refresh with query parameters.</p>
+    </div>
+</body>
+</html>

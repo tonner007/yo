@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Extreme anti-cache -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <title>YO App - FRESH VERSION</title>
+    
+    <script>
+        // Force fresh load with unique URL
+        const unique = 'FRESH_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        console.log('Loading fresh version:', unique);
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    
+    <!-- Load NEW JavaScript file that Cloudflare hasn't cached -->
+    <script type="module" src="/src/main-NEW.jsx?v=<?php echo time(); ?>"></script>
+    
+    <!-- Fallback to original if new fails -->
+    <script>
+        window.addEventListener('error', function(e) {
+            if (e.target.tagName === 'SCRIPT' && e.target.src.includes('main-NEW')) {
+                console.log('New JS failed, loading original...');
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.src = '/src/main.jsx?v=FRESH_FALLBACK_' + Date.now();
+                document.head.appendChild(script);
+            }
+        });
+    </script>
+    
+    <noscript>
+        <h1>JavaScript is required</h1>
+        <p>Please enable JavaScript to use this application.</p>
+    </noscript>
+  </body>
+</html>

@@ -9,6 +9,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { WagmiProvider } from '@/components/providers/WagmiProvider';
+import { WalletProvider } from './contexts/WalletContext';
 // Add page imports here
 import Dashboard from './pages/Dashboard';
 
@@ -63,10 +64,12 @@ function App() {
     <AuthProvider>
       <WagmiProvider>
         <QueryClientProvider client={queryClientInstance}>
-          <Router>
-            <AuthenticatedApp />
-          </Router>
-          <Toaster />
+          <WalletProvider>
+            <Router>
+              <AuthenticatedApp />
+            </Router>
+            <Toaster />
+          </WalletProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </AuthProvider>

@@ -15,33 +15,38 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000, // Port 3000 pro kompatibilitu
+    port: 5173, // Standardní Vite port
     host: true, // Přístup z localhost i IP
     open: false, // Neotvírat automaticky (server prostředí)
     allowedHosts: [
       'tonner.my.id',          // Hlavní doména
       'localhost',             // Lokální vývoj
       '127.0.0.1',            // Lokální IP
-      '0.0.0.0'               // Všechny adresy
+      '0.0.0.0',              // Všechny adresy
+      '.localhost',            // Pro Chrome
+      '.tonner.my.id'         // Subdomény
     ],
+    cors: true, // Povolit CORS
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-      'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
+      'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization, Origin, Accept',
+      'Cross-Origin-Opener-Policy': 'unsafe-none', // Důležité pro Chrome
+      'Cross-Origin-Embedder-Policy': 'unsafe-none', // Důležité pro Chrome
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+    },
+    hmr: {
+      clientPort: 5173,
+      protocol: 'ws',
+      host: 'localhost',
+    },
+    fs: {
+      strict: false, // Povolit serving z jiných adresářů
     },
   },
   build: {
     outDir: 'dist',
     sourcemap: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@radix-ui/react-*', 'lucide-react'],
-          utils: ['lodash', 'date-fns', 'zod'],
-        },
-      },
-    },
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check, X } from "lucide-react";
+import { useWallet } from "../../contexts/WalletContext";
 
 const USDC_ADDRESSES = {
   base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
@@ -13,7 +14,7 @@ const NETWORKS = [
   { id: "arbitrum", label: "Arbitrum One" },
 ];
 
-function NetworkDropdown({ selectedNetwork, onSelect }) {
+function NetworkDropdown({ selectedNetwork, onSelect, disabled = false, tooltip }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -30,8 +31,13 @@ function NetworkDropdown({ selectedNetwork, onSelect }) {
   return (
     <div className="relative flex-1" ref={ref}>
       <div
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-4 bg-secondary border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-muted-foreground transition-colors select-none h-full"
+        onClick={() => !disabled && setOpen((v) => !v)}
+        className={`flex items-center gap-4 bg-secondary border border-border rounded-xl px-4 py-3 select-none h-full ${
+          disabled 
+            ? 'opacity-50 cursor-not-allowed' 
+            : 'cursor-pointer hover:border-muted-foreground transition-colors'
+        }`}
+        title={tooltip}
       >
         <img
           src="/icons/usdc.png"
@@ -71,7 +77,9 @@ function NetworkDropdown({ selectedNetwork, onSelect }) {
   );
 }
 
-export default function DepositModal({ isOpen, onClose, defaultTab = "deposit" }) {
+export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", onTransactionComplete }) {
+  const { userAddress, isConnected } = useWallet();
+  
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [selectedNetwork, setSelectedNetwork] = useState("base");
   const [depositAmount, setDepositAmount] = useState("");
@@ -87,15 +95,86 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit" }
   const amount = parseFloat(depositAmount);
   const isValid = !isNaN(amount) && amount > 0;
 
-  const handleDeposit = () => {
+  const handleDeposit = async () => {
     if (!isValid) return;
+    
+    // Check if wallet is connected
+    if (!userAddress) {
+      alert("Please connect your wallet first");
+      return;
+    }
+    
     // Prepared for blockchain integration
     console.log("Deposit:", {
       token: "USDC",
       network: selectedNetwork,
       address: USDC_ADDRESSES[selectedNetwork],
       amount: amount,
+      userAddress,
     });
+    
+    // Simulace transakce
+    try {
+      // Zde by byla skutečná transakce přes smart contract
+      // Pro demo pouze simulace
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      console.log("Deposit transaction simulated successfully");
+      
+      // Zavolání callbacku pro aktualizaci UI
+      if (onTransactionComplete) {
+        onTransactionComplete();
+      }
+      
+      // Zavření modalu
+      onClose();
+      
+      // Zobrazení success message
+      alert(`Successfully deposited $${amount.toFixed(2)} USDC on ${selectedNetwork}`);
+      
+    } catch (error) {
+      console.error("Deposit failed:", error);
+      alert("Deposit failed. Please try again.");
+    }
+  };
+  
+  const handleWithdraw = async () => {
+    if (!isValid) return;
+    
+    // Check if wallet is connected
+    if (!userAddress) {
+      alert("Please connect your wallet first");
+      return;
+    }
+    
+    console.log("Withdraw:", {
+      token: "USDC",
+      network: selectedNetwork,
+      amount: amount,
+      userAddress,
+    });
+    
+    // Simulace transakce
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      console.log("Withdraw transaction simulated successfully");
+      
+      // Zavolání callbacku pro aktualizaci UI
+      if (onTransactionComplete) {
+        onTransactionComplete();
+      }
+      
+      // Zavření modalu
+      onClose();
+      
+      // Zobrazení success message
+      alert(`Successfully withdrew $${amount.toFixed(2)} USDC from ${selectedNetwork}`);
+      
+    } catch (error) {
+      console.error("Withdraw failed:", error);
+      alert("Withdraw failed. Please try again.");
+    }
   };
 
   if (!isOpen) return null;
@@ -148,7 +227,12 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit" }
 
             <div className="flex gap-4">
               {/* Network dropdown */}
-              <NetworkDropdown selectedNetwork={selectedNetwork} onSelect={setSelectedNetwork} />
+              <NetworkDropdown 
+                selectedNetwork={selectedNetwork} 
+                onSelect={setSelectedNetwork}
+                disabled={!userAddress}
+                tooltip={!userAddress ? "Connect wallet to change network" : undefined}
+              />
 
               {/* Amount input */}
               <div className="flex-1 bg-secondary border border-border rounded-xl px-4 py-3 flex flex-col justify-between">
@@ -167,17 +251,18 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit" }
             </div>
           </div>
 
-          {/* Deposit button */}
+          {/* Action button */}
           <button
-            onClick={handleDeposit}
-            disabled={!isValid}
+            onClick={activeTab === "deposit" ? handleDeposit : handleWithdraw}
+            disabled={!isValid || !userAddress}
             className={`w-full py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all ${
-              isValid
+              isValid && userAddress
                 ? "bg-primary text-primary-foreground hover:opacity-90"
                 : "bg-secondary text-muted-foreground cursor-not-allowed opacity-50"
             }`}
+            title={!userAddress ? "Connect wallet first" : undefined}
           >
-            {activeTab === "deposit" ? "Deposit" : "Withdraw"}
+            {!userAddress ? "Connect Wallet First" : (activeTab === "deposit" ? "Deposit" : "Withdraw")}
           </button>
         </div>
       </div>

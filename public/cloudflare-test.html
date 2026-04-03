@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cloudflare Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; white-space: pre; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+<h1>🔍 Cloudflare Connection Test</h1>
+
+<script>
+// Test 1: Detect Cloudflare
+const isCloudflare = window.location.hostname.includes('cloudflare') || 
+                     document.cookie.includes('__cf') ||
+                     navigator.userAgent.includes('Cloudflare');
+                     
+document.write(`Cloudflare detected: ${isCloudflare ? '✅ YES' : '❌ NO'}\n\n`);
+
+// Test 2: Load resources
+const resources = [
+    '/src/main.jsx',
+    '/@vite/client',
+    '/node_modules/.vite/deps/react.js'
+];
+
+let loaded = 0;
+let failed = 0;
+
+resources.forEach(url => {
+    const script = document.createElement('script');
+    script.onload = () => {
+        loaded++;
+        document.write(`✅ ${url} loaded\n`);
+        updateStatus();
+    };
+    script.onerror = () => {
+        failed++;
+        document.write(`❌ ${url} failed to load\n`);
+        updateStatus();
+    };
+    script.src = url;
+    document.head.appendChild(script);
+});
+
+function updateStatus() {
+    if (loaded + failed === resources.length) {
+        document.write(`\n📊 Result: ${loaded}/${resources.length} resources loaded\n`);
+        
+        if (failed > 0) {
+            document.write(`\n🔧 Likely Cloudflare blocking issues:\n`);
+            document.write(`1. Cloudflare may block .jsx files\n`);
+            document.write(`2. Cloudflare may block /@vite/ paths\n`);
+            document.write(`3. Cloudflare cache may be stale\n\n`);
+            document.write(`💡 Solutions:\n`);
+            document.write(`• Disable Cloudflare proxy (DNS-only mode)\n`);
+            document.write(`• Enable Development Mode in Cloudflare\n`);
+            document.write(`• Purge Cloudflare cache\n`);
+            document.write(`• Use direct IP: http://[2a01:4f8:1c19:713e::1]\n`);
+        }
+    }
+}
+
+// Test 3: Check headers
+fetch('/')
+    .then(r => {
+        const server = r.headers.get('server');
+        const cfRay = r.headers.get('cf-ray');
+        document.write(`\nServer header: ${server || 'Not set'}\n`);
+        document.write(`CF-RAY: ${cfRay || 'Not set'}\n`);
+        document.write(`Via Cloudflare: ${server === 'cloudflare' || cfRay ? '✅ YES' : '❌ NO'}\n`);
+    })
+    .catch(err => {
+        document.write(`\n❌ Fetch test failed: ${err.message}\n`);
+    });
+
+document.write(`\n=== Browser Info ===\n`);
+document.write(`URL: ${window.location.href}\n`);
+document.write(`Hostname: ${window.location.hostname}\n`);
+document.write(`Protocol: ${window.location.protocol}\n`);
+</script>
+
+<noscript>
+<h2>JavaScript is disabled!</h2>
+<p>This test requires JavaScript. Enable it to continue.</p>
+</noscript>
+
+<div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
+<h2>📋 Quick Fixes:</h2>
+<ol>
+    <li><strong>Cloudflare Dashboard</strong> → DNS → Disable proxy (orange cloud to gray)</li>
+    <li><strong>Cloudflare Dashboard</strong> → Caching → Development Mode → Enable</li>
+    <li><strong>Cloudflare Dashboard</strong> → Caching → Purge Everything</li>
+    <li><strong>Local hosts file</strong> (on your computer):
+        <pre>2a01:4f8:1c19:713e::1 tonner.my.id</pre>
+    </li>
+</ol>
+</div>
+</body>
+</html>

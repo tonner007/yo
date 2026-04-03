@@ -1,11 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NetworkSelector from "./NetworkSelector";
 import DepositModal from "./DepositModal";
 import HoldingsCard from "./HoldingsCard";
+import { useWallet } from "../../contexts/WalletContext";
+import { useBalance } from "../../hooks/useBalance";
 
 export default function VaultHeader() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [defaultModalTab, setDefaultModalTab] = useState("deposit");
+  
+  // Wallet state
+  const { isConnected, userAddress, network, switchNetwork } = useWallet();
+  
+  // USDC balance - using ultra-simple hook
+  const { 
+    availableToDeposit,
+    isLoading,
+    refreshBalance
+  } = useBalance(userAddress, network);
+  
+  // Balance updates automatically via useEffect in hook
+  
+  // Aktualizace po transakci
+  const handleAfterTransaction = () => {
+    // Balance will auto-refresh via hook
+    console.log('Transaction completed, balance will auto-refresh');
+  };
+  
+  const handleDepositClick = () => {
+    if (!isConnected) {
+      // Pokud není připojená peněženka, můžeme zobrazit connect modal
+      // Prozatím otevřeme deposit modal a uživatel uvidí $0.00
+      console.log("Wallet not connected, showing deposit modal with $0.00");
+    }
+    setDefaultModalTab("deposit");
+    setIsDepositModalOpen(true);
+  };
+  
   return (
     <>
       <div className="px-6 py-6">
@@ -14,19 +45,24 @@ export default function VaultHeader() {
         <div className="positions-row grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
           {/* USDC Network Selector */}
           <div className="position-card h-full">
-            <NetworkSelector />
+            <NetworkSelector 
+              onNetworkChange={switchNetwork}
+              currentNetwork={network}
+            />
           </div>
 
           {/* Available to Deposit */}
           <div className="position-card h-full">
             <HoldingsCard 
               label="Available to Deposit" 
-              value="$0.00" 
+              value={isLoading ? "Loading..." : availableToDeposit}
               subtitle="Deposit"
-              onSubtitleClick={() => {
-                setDefaultModalTab("deposit");
-                setIsDepositModalOpen(true);
-              }}
+              onSubtitleClick={handleDepositClick}
+              isLoading={isLoading}
+              tooltip={isConnected ? 
+                `Your USDC balance on ${network} network` : 
+                "Connect wallet to see your USDC balance"
+              }
             />
           </div>
 
@@ -36,14 +72,32 @@ export default function VaultHeader() {
               label="7D APY" 
               value="16.95 %" 
               highlight={true}
+              tooltip="7-day average annual percentage yield"
             />
           </div>
         </div>
+        
+        {/* Wallet connection status */}
+        <div className="mt-4 text-sm text-muted-foreground">
+          {isConnected ? (
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span>Wallet connected to {network} • Balance updates automatically</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+              <span>Connect wallet to see your actual USDC balance</span>
+            </div>
+          )}
+        </div>
       </div>
+      
       <DepositModal 
         isOpen={isDepositModalOpen} 
         onClose={() => setIsDepositModalOpen(false)}
         defaultTab={defaultModalTab}
+        onTransactionComplete={handleAfterTransaction}
       />
     </>
   );

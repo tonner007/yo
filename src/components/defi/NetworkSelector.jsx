@@ -13,10 +13,15 @@ const NETWORKS = [
   { id: "arbitrum", label: "Arbitrum One" },
 ];
 
-export default function NetworkSelector({ onNetworkChange }) {
-  const [selectedNetwork, setSelectedNetwork] = useState("base");
+export default function NetworkSelector({ onNetworkChange, currentNetwork = "base" }) {
+  const [selectedNetwork, setSelectedNetwork] = useState(currentNetwork);
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  
+  // Sync with parent component
+  useEffect(() => {
+    setSelectedNetwork(currentNetwork);
+  }, [currentNetwork]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -30,7 +35,7 @@ export default function NetworkSelector({ onNetworkChange }) {
     setSelectedNetwork(networkId);
     setOpen(false);
     if (onNetworkChange) {
-      onNetworkChange({ network: networkId, address: USDC_ADDRESSES[networkId] });
+      onNetworkChange(networkId);
     }
   };
 
