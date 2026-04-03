@@ -71,17 +71,18 @@ function NetworkDropdown({ selectedNetwork, onSelect }) {
   );
 }
 
-export default function DepositModal({ isOpen, onClose }) {
-  const [activeTab, setActiveTab] = useState("deposit");
+export default function DepositModal({ isOpen, onClose, defaultTab = "deposit" }) {
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [selectedNetwork, setSelectedNetwork] = useState("base");
   const [depositAmount, setDepositAmount] = useState("");
 
-  // Reset amount when modal closes or reopens
+  // Reset amount and update tab when modal opens
   useEffect(() => {
     if (isOpen) {
       setDepositAmount("");
+      setActiveTab(defaultTab);
     }
-  }, [isOpen]);
+  }, [isOpen, defaultTab]);
 
   const amount = parseFloat(depositAmount);
   const isValid = !isNaN(amount) && amount > 0;

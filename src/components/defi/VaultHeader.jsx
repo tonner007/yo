@@ -4,6 +4,7 @@ import DepositModal from "./DepositModal";
 
 export default function VaultHeader() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [defaultModalTab, setDefaultModalTab] = useState("deposit");
   return (
     <>
       <div className="px-6 py-6">
@@ -21,16 +22,32 @@ export default function VaultHeader() {
 
           {/* Actions */}
           <div className="flex items-center gap-3 ml-auto">
-            <button className="bg-secondary text-foreground font-bold text-sm px-7 py-3 rounded-full hover:opacity-90 transition-opacity">
+            <button 
+              onClick={() => {
+                setDefaultModalTab("withdraw");
+                setIsDepositModalOpen(true);
+              }}
+              className="bg-secondary text-foreground font-bold text-sm px-7 py-3 rounded-full hover:opacity-90 transition-opacity"
+            >
               WITHDRAW
             </button>
-            <button onClick={() => setIsDepositModalOpen(true)} className="bg-primary text-primary-foreground font-bold text-sm px-7 py-3 rounded-full hover:opacity-90 transition-opacity">
+            <button 
+              onClick={() => {
+                setDefaultModalTab("deposit");
+                setIsDepositModalOpen(true);
+              }}
+              className="bg-primary text-primary-foreground font-bold text-sm px-7 py-3 rounded-full hover:opacity-90 transition-opacity"
+            >
               DEPOSIT
             </button>
           </div>
         </div>
       </div>
-      <DepositModal isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)} />
+      <DepositModal 
+        isOpen={isDepositModalOpen} 
+        onClose={() => setIsDepositModalOpen(false)}
+        defaultTab={defaultModalTab}
+      />
     </>
   );
 }
