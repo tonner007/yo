@@ -1,6 +1,7 @@
 import { useState } from "react";
 import NetworkSelector from "./NetworkSelector";
 import DepositModal from "./DepositModal";
+import HoldingsCard from "./HoldingsCard";
 
 export default function VaultHeader() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -10,18 +11,25 @@ export default function VaultHeader() {
       <div className="px-6 py-6">
         <h2 className="text-foreground font-bold text-2xl mb-6">My positions</h2>
 
-        <div className="flex flex-wrap items-center gap-4">
-          {/* USDC Network Selector */}
-          <NetworkSelector />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+          {/* Top cards container */}
+          <div className="top-cards grid grid-cols-2 gap-4 md:col-span-2">
+            {/* USDC Network Selector */}
+            <div className="h-full">
+              <NetworkSelector />
+            </div>
 
-          {/* Available to Deposit */}
-          <div className="bg-card border border-border rounded-xl px-6 py-3">
-            <div className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground mb-1">Available to Deposit</div>
-            <div className="text-2xl font-bold text-foreground">$0.00</div>
+            {/* Available to Deposit */}
+            <div className="h-full">
+              <HoldingsCard 
+                label="Available to Deposit" 
+                value="$0.00" 
+              />
+            </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-4 ml-auto">
+          <div className="flex items-center gap-4 justify-end md:justify-start">
             <button 
               onClick={() => {
                 setDefaultModalTab("withdraw");

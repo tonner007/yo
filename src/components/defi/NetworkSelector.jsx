@@ -41,21 +41,31 @@ export default function NetworkSelector({ onNetworkChange }) {
       {/* Trigger */}
       <div
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-4 bg-card border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-muted-foreground transition-colors select-none"
+        className="stat-card top-card cursor-pointer hover:border-muted-foreground transition-colors select-none"
       >
-        <div className="asset-icon w-9 h-9">
-          <img
-            src="/icons/usdc.png"
-            alt="USDC"
-          />
+        <div className="flex items-center gap-1.5 mb-3">
+          <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">USDC</span>
         </div>
-        <div>
-          <div className="text-foreground font-bold text-sm">USDC</div>
-          <div className="text-muted-foreground text-xs">{current.label}</div>
+        <div className="flex flex-col flex-grow justify-between">
+          <div className="mt-auto">
+            <div className="text-2xl font-bold text-foreground">{current.label}</div>
+            <div className="flex items-center justify-between mt-1">
+              <div className="flex items-center gap-3">
+                <div className="asset-icon w-6 h-6">
+                  <img
+                    src="/icons/usdc.png"
+                    alt="USDC"
+                    className="w-full h-full"
+                  />
+                </div>
+                <span className="text-xs text-muted-foreground">Select network</span>
+              </div>
+              <ChevronDown
+                className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+              />
+            </div>
+          </div>
         </div>
-        <ChevronDown
-          className={`w-4 h-4 text-muted-foreground ml-2 transition-transform ${open ? "rotate-180" : ""}`}
-        />
       </div>
 
       {/* Dropdown */}
