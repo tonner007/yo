@@ -58,15 +58,24 @@ export default function HoldingsGrid() {
       label: "PROFIT & LOSS", 
       value: profit,
       isLoading: isProfitLoading,
+      showInfo: true,
+      tooltip: "Current profit or loss versus your net deposits",
       valueClassName: profitRaw > 0 ? 'text-green-500' : profitRaw < 0 ? 'text-red-500' : 'text-foreground',
       subtitle: "Claim profit",
       onSubtitleClick: () => {}
     },
-    { label: "Projected 1 Y Earnings", value: projectedYearlyEarnings },
+    { 
+      label: "Projected 1 Y Earnings", 
+      value: projectedYearlyEarnings,
+      showInfo: true,
+      tooltip: "Simple yearly estimate based on current total balance and native APY"
+    },
     { 
       label: "Claimable Rewards", 
       value: claimableRewards,
       isLoading: isClaimableRewardsLoading,
+      showInfo: true,
+      tooltip: "Additional rewards available to claim separately from vault balance",
       subtitle: "Claim rewards",
       onSubtitleClick: canClaim ? async () => {
         alert('Claim flow is not yet wired to an onchain transaction. Rewards value was refreshed from YO API.');

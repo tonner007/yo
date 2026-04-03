@@ -26,10 +26,12 @@ export default function HoldingsCard({
           >
             <Info className="w-3 h-3 text-muted-foreground cursor-help" />
             {tooltip && showTooltip && (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-50">
-                {tooltip}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 w-[50%] min-w-[160px]">
+                <div className="stat-card top-card position-card-content px-3 py-2 text-sm text-muted-foreground shadow-xl whitespace-normal break-words leading-relaxed">
+                  {tooltip}
+                </div>
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                  <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
+                  <div className="w-2.5 h-2.5 bg-card border-r border-b border-border rotate-45"></div>
                 </div>
               </div>
             )}
