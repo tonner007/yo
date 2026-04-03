@@ -106,17 +106,17 @@ export default function DepositModal({ isOpen, onClose }) {
 
       {/* Modal */}
       <div className="relative z-10 bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl">
-        {/* Close button - vertically centered and slightly more to the right */}
+        {/* Close button - fine-tuned position */}
         <button
           onClick={onClose}
-          className="absolute top-1/2 right-6 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors w-10 h-10 flex items-center justify-center bg-card/80 hover:bg-card rounded-full"
+          className="absolute top-2.5 right-3 text-muted-foreground hover:text-foreground transition-colors w-10 h-10 flex items-center justify-center bg-card/80 hover:bg-card rounded-full z-20"
           aria-label="Close deposit modal"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Tabs */}
-        <div className="flex border-b border-border">
+        <div className="flex border-b border-border pt-1">
           {["deposit", "withdraw"].map((tab) => (
             <button
               key={tab}
@@ -127,7 +127,7 @@ export default function DepositModal({ isOpen, onClose }) {
             >
               {tab}
               {activeTab === tab && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                <span className="absolute bottom-0 left-0 right-0 h-px bg-primary" />
               )}
             </button>
           ))}
