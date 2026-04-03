@@ -55,7 +55,7 @@ export default function HoldingsGrid() {
       }
     },
     { 
-      label: "Profit", 
+      label: "PROFIT & LOSS", 
       value: profit,
       isLoading: isProfitLoading,
       valueClassName: profitRaw > 0 ? 'text-green-500' : profitRaw < 0 ? 'text-red-500' : 'text-foreground',
