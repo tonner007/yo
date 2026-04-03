@@ -9,7 +9,8 @@ export default function HoldingsCard({
   highlight, 
   onSubtitleClick,
   isLoading = false,
-  tooltip
+  tooltip,
+  valueClassName = "text-foreground"
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
   
@@ -37,7 +38,7 @@ export default function HoldingsCard({
       </div>
       <div className="flex flex-col flex-grow">
         <div className="flex flex-col justify-between flex-grow">
-          <div className="text-2xl font-bold text-foreground mb-2 flex items-center">
+          <div className={`text-2xl font-bold mb-2 flex items-center ${valueClassName}`}>
             {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />

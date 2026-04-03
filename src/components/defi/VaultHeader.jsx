@@ -4,6 +4,7 @@ import DepositModal from "./DepositModal";
 import HoldingsCard from "./HoldingsCard";
 import { useWallet } from "../../contexts/WalletContext";
 import { useBalance } from "../../hooks/useBalance";
+import { useSevenDayApy } from "../../hooks/useSevenDayApy";
 
 export default function VaultHeader() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -18,13 +19,20 @@ export default function VaultHeader() {
     isLoading,
     refreshBalance
   } = useBalance(userAddress, network);
+
+  const {
+    apy,
+    isLoading: isApyLoading,
+    refreshApy,
+  } = useSevenDayApy(network);
   
   // Balance updates automatically via useEffect in hook
   
   // Aktualizace po transakci
   const handleAfterTransaction = () => {
-    // Balance will auto-refresh via hook
-    console.log('Transaction completed, balance will auto-refresh');
+    refreshBalance();
+    refreshApy();
+    console.log('Transaction completed, balance and APY refreshed');
   };
   
   const handleDepositClick = () => {
@@ -70,9 +78,10 @@ export default function VaultHeader() {
           <div className="position-card h-full">
             <HoldingsCard 
               label="7D APY" 
-              value="16.95 %" 
+              value={isApyLoading ? "Loading..." : apy}
               highlight={true}
-              tooltip="7-day average annual percentage yield"
+              isLoading={isApyLoading}
+              tooltip="Native APY from YO SDK vault snapshot"
             />
           </div>
         </div>

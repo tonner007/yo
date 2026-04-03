@@ -11,7 +11,7 @@ const DEMO_USERS = {
     balance: 1250.75, // Simulovaný USDC balance
   },
   base: {
-    address: '0x4bb7dA7c06d0B9dA7aA5D4def0C5d8F50dD7F7E8',
+    address: '0x4bb7da7c06d0b9da7aa5d4def0c5d8f50dd7f7e8',
     name: 'Demo User (Base)',
     balance: 850.50,
   },
