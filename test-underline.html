@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    /* Zkopíruji relevantní CSS */
+    .deposit-modal-tab {
+      position: relative;
+      flex: 1;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+      font-size: 0.875rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+    
+    .deposit-modal-tab.active::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -1px;
+      height: 2px;
+      background-color: rgb(190, 242, 100);
+      pointer-events: none;
+      z-index: 5;
+      border: 1px solid red; /* DEBUG: přidám červený okraj pro viditelnost */
+    }
+    
+    .deposit-modal-tab.active.deposit-tab::after {
+      right: 0;
+    }
+    
+    .deposit-modal-tab.active.withdraw-tab::after {
+      right: -48px;
+    }
+    
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      padding-right: 24px;
+      border-bottom: 1px solid #333;
+      width: 100%;
+      max-width: 500px;
+      margin: 20px auto;
+      background: #1a1a1a;
+      overflow: visible;
+    }
+    
+    .tabs-container {
+      display: flex;
+      flex: 1;
+    }
+    
+    .close-button {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #888;
+      border-radius: 50%;
+      position: relative;
+      z-index: 10;
+    }
+    
+    .close-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .debug-info {
+      margin-top: 30px;
+      padding: 15px;
+      background: #222;
+      border: 1px solid #444;
+      font-family: monospace;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h2>Test Underline Visibility</h2>
+  
+  <div class="header-container">
+    <div class="tabs-container">
+      <button class="deposit-modal-tab active deposit-tab">
+        DEPOSIT
+      </button>
+      <button class="deposit-modal-tab withdraw-tab">
+        WITHDRAW
+      </button>
+    </div>
+    
+    <button class="close-button">×</button>
+  </div>
+  
+  <div class="debug-info">
+    <h3>Debug Info:</h3>
+    <p>1. DEPOSIT tab má třídy: "deposit-modal-tab active deposit-tab"</p>
+    <p>2. ::after pseudo-element by měl být vidět jako červeně orámovaný zelený pruh</p>
+    <p>3. Pokud není vidět, problém je v CSS nebo renderování</p>
+  </div>
+  
+  <div style="margin-top: 30px;">
+    <button onclick="switchTab('withdraw')">Switch to WITHDRAW (active)</button>
+    <button onclick="switchTab('deposit')">Switch to DEPOSIT (active)</button>
+  </div>
+  
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.deposit-modal-tab').forEach(btn => {
+        btn.classList.remove('active', 'deposit-tab', 'withdraw-tab');
+        if (btn.textContent.trim() === tab.toUpperCase()) {
+          btn.classList.add('active', tab + '-tab');
+        }
+      });
+    }
+  </script>
+</body>
+</html>

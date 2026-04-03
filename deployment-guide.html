@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Návod - Nasazení YO App na tonner.my.id</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #FFFFFF;
+            color: #000000;
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: #FFFFFF;
+            border-radius: 4px;
+            padding: 40px;
+            border: 1px solid #CCCCCC;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-top: 20px;
+        }
+        
+        h1 {
+            color: #000000;
+            border-bottom: 2px solid #0072BB;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 32px;
+        }
+        
+        .step-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .step-card {
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .step-card.completed {
+            border-color: #51CF66;
+            background: linear-gradient(135deg, rgba(81, 207, 102, 0.05) 0%, rgba(81, 207, 102, 0.02) 100%);
+        }
+        
+        .step-card.ready {
+            border-color: #2775CA;
+            background: linear-gradient(135deg, rgba(39, 117, 202, 0.05) 0%, rgba(39, 117, 202, 0.02) 100%);
+        }
+        
+        .step-card.pending {
+            border-color: #F59E0B;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(245, 158, 11, 0.02) 100%);
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .completed .card-icon {
+            background: #51CF66;
+            color: white;
+        }
+        
+        .ready .card-icon {
+            background: #2775CA;
+            color: white;
+        }
+        
+        .pending .card-icon {
+            background: #F59E0B;
+            color: white;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+            color: #1F2937;
+        }
+        
+        .card-desc {
+            font-size: 14px;
+            color: #4B5563;
+            margin: 0;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+        
+        .code-block {
+            background: #111111;
+            color: #E2E8F0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin: 15px 0;
+        }
+        
+        .file-section {
+            background: #F8F9FA;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #E9ECEF;
+        }
+        
+        .file-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #495057;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .timestamp {
+            font-size: 12px;
+            color: #999999;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 5px 0;
+        }
+        
+        .badge-success {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .badge-warning {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        
+        .badge-info {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+        
+        .test-section {
+            background: #EFF6FF;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #BFDBFE;
+        }
+        
+        .test-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1E40AF;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .command {
+            background: #111111;
+            color: #E2E8F0;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Návod - Nasazení YO App na tonner.my.id</h1>
+        
+        <div class="test-section">
+            <h3 class="test-title">✅ Testováno a funkční</h3>
+            <p><span class="status-badge badge-success">TONNER.MY.ID POVOLEN</span> Vite server nyní přijímá požadavky z tonner.my.id</p>
+            
+            <div class="command">curl -H "Host: tonner.my.id" http://localhost:3000 → HTTP 200 OK</div>
+            <div class="command">curl -H "Host: localhost" http://localhost:3000 → HTTP 200 OK</div>
+        </div>
+        
+        <div class="step-grid">
+            <div class="step-card completed">
+                <div class="card-icon">✅</div>
+                <h3 class="card-title">Krok 1: Povolit hosta</h3>
+                <p class="card-desc">
+                    Přidáno <code>tonner.my.id</code> do <code>server.allowedHosts</code> v vite.config.js
+                </p>
+                <div class="code-block">allowedHosts: [
+  'tonner.my.id',
+  'localhost',
+  '127.0.0.1',
+  '0.0.0.0'
+]</div>
+            </div>
+            
+            <div class="step-card completed">
+                <div class="card-icon">✅</div>
+                <h3 class="card-title">Krok 2: Změnit port</h3>
+                <p class="card-desc">
+                    Port změněn z 5173 na 3000 pro kompatibilitu s předchozími aplikacemi.
+                </p>
+                <div class="code-block">server: {
+  port: 3000,
+  host: true,
+  open: false
+}</div>
+            </div>
+            
+            <div class="step-card ready">
+                <div class="card-icon">🔧</div>
+                <h3 class="card-title">Krok 3: Nginx Reverse Proxy</h3>
+                <p class="card-desc">
+                    Na serveru tonner.my.id nastavit Nginx, který bude přesměrovávat traffic na port 3000.
+                </p>
+                <div class="code-block"># /etc/nginx/sites-available/tonner.my.id
+server {
+    listen 80;
+    server_name tonner.my.id;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}</div>
+            </div>
+            
+            <div class="step-card pending">
+                <div class="card-icon">🔒</div>
+                <h3 class="card-title">Krok 4: SSL Certifikát</h3>
+                <p class="card-desc">
+                    Přidat HTTPS pomocí Let's Encrypt certifikátu.
+                </p>
+                <div class="code-block">sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d tonner.my.id</div>
+            </div>
+        </div>
+        
+        <div class="file-section">
+            <h3 class="file-title">📄 Aktuální vite.config.js</h3>
+            <div class="code-block">import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+import path from 'path'
+
+export default defineConfig({
+  logLevel: 'warn',
+  plugins: [react()],
+  resolve: { alias: { '@': path.resolve(__dirname, './src') } },
+  server: {
+    port: 3000,
+    host: true,
+    open: false,
+    allowedHosts: [
+      'tonner.my.id',
+      'localhost',
+      '127.0.0.1',
+      '0.0.0.0'
+    ],
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
+    },
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['@radix-ui/react-*', 'lucide-react'],
+          utils: ['lodash', 'date-fns', 'zod'],
+        },
+      },
+    },
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
+  },
+});</div>
+        </div>
+        
+        <div class="file-section">
+            <h3 class="file-title">🔧 Kompletní Nginx konfigurace pro tonner.my.id</h3>
+            <div class="code-block"># 1. HTTP → HTTPS redirect
+server {
+    listen 80;
+    listen [::]:80;
+    server_name tonner.my.id www.tonner.my.id;
+    
+    # Redirect to HTTPS
+    return 301 https://tonner.my.id$request_uri;
+}
+
+# 2. HTTPS server
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name tonner.my.id www.tonner.my.id;
+    
+    # SSL certificates (after certbot)
+    ssl_certificate /etc/letsencrypt/live/tonner.my.id/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/tonner.my.id/privkey.pem;
+    
+    # SSL optimization
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512;
+    ssl_prefer_server_ciphers off;
+    
+    # Root location
+    location / {
+        proxy_pass http://localhost:3000;
+        
+        # Headers for Vite
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+    
+    # Static files cache
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}</div>
+        </div>
+        
+        <div class="file-section">
+            <h3 class="file-title">🚀 Rychlý deploy script pro tonner.my.id</h3>
+            <div class="code-block">#!/bin/bash
+# deploy-yo-app.sh
+
+echo "🚀 Nasazování YO App na tonner.my.id"
+
+# 1. Aktualizovat systém
+sudo apt update && sudo apt upgrade -y
+
+# 2. Nainstalovat Nginx
+sudo apt install nginx -y
+
+# 3. Vytvořit Nginx konfiguraci
+sudo tee /etc/nginx/sites-available/tonner.my.id > /dev/null << 'EOF'
+server {
+    listen 80;
+    server_name tonner.my.id;
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+EOF
+
+# 4. Povolit konfiguraci
+sudo ln -sf /etc/nginx/sites-available/tonner.my.id /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# 5. Testovat a restartovat Nginx
+sudo nginx -t && sudo systemctl restart nginx
+
+# 6. Instalace Node.js (pokud není)
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install nodejs -y
+
+# 7. Spustit aplikaci (předpokládá se, že kód je v /home/user/yo-app)
+cd /home/user/yo-app
+npm install
+npm run dev &
+
+echo "✅ Nasazení dokončeno! Aplikace běží na http://tonner.my.id"</div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <p style="color: #666666; font-size: 14px;">
+                <strong>Aplikace:</strong> YO App běží na portu 3000<br>
+                <strong>Host povolen:</strong> tonner.my.id ✅<br>
+                <strong>Stav:</strong> Připraveno pro Nginx reverse proxy<br>
+                <strong>URL:</strong> http://localhost:3000 (lokálně)
+            </p>
+            
+            <p class="timestamp">
+                Návod vytvořen: 2026-04-03 11:21 UTC
+            </p>
+        </div>
+    </div>
+</body>
+</html>
