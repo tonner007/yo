@@ -34,14 +34,14 @@ export default function WalletConnectButton() {
   if (isConnected && address) {
     return (
       <div className="flex items-center gap-3">
-        <div className="bg-card border border-border rounded-full px-4 py-2 text-sm font-semibold">
+        <div className="border border-border rounded-full px-5 py-3 text-sm font-bold text-foreground flex items-center">
           {formatAddress(address)}
         </div>
         <button
           onClick={handleDisconnect}
-          className="bg-secondary text-foreground font-bold text-sm px-4 py-2 rounded-full hover:opacity-90 transition-opacity"
+          className="bg-secondary text-foreground font-bold text-sm px-7 py-3 rounded-full hover:opacity-90 transition-opacity"
         >
-          Disconnect
+          DISCONNECT
         </button>
       </div>
     );
