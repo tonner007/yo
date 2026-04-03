@@ -30,37 +30,13 @@ export default function VaultHeader() {
             />
           </div>
 
-          {/* Actions Card */}
+          {/* 7D APY Card */}
           <div className="position-card h-full">
-            <div className="stat-card top-card position-card-content">
-              <div className="flex items-center gap-1.5 mb-3">
-                <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">ACTIONS</span>
-              </div>
-              <div className="flex flex-col flex-grow justify-between">
-                <div className="mt-auto">
-                  <div className="flex gap-3 mt-auto">
-                    <button 
-                      onClick={() => {
-                        setDefaultModalTab("withdraw");
-                        setIsDepositModalOpen(true);
-                      }}
-                      className="bg-secondary text-foreground font-bold text-sm px-4 py-3 rounded-full hover:opacity-90 transition-opacity flex-1"
-                    >
-                      WITHDRAW
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setDefaultModalTab("deposit");
-                        setIsDepositModalOpen(true);
-                      }}
-                      className="bg-primary text-primary-foreground font-bold text-sm px-4 py-3 rounded-full hover:opacity-90 transition-opacity flex-1"
-                    >
-                      DEPOSIT
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <HoldingsCard 
+              label="7D APY" 
+              value="16.95 %" 
+              highlight={true}
+            />
           </div>
         </div>
       </div>

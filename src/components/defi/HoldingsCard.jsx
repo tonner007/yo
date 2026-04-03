@@ -11,7 +11,7 @@ export default function HoldingsCard({ label, value, subtitle, showInfo, highlig
         <div className="flex flex-col justify-between flex-grow">
           <div className="text-2xl font-bold text-foreground mb-2">
             {value}
-            {highlight && <span className="ml-1.5 text-sm">✨</span>}
+            {highlight && <span className="ml-2 text-xl">✨</span>}
           </div>
           {subtitle && (
             <div 

@@ -16,7 +16,6 @@ export default function HoldingsGrid() {
         setIsDepositModalOpen(true);
       }
     },
-    { label: "7D APY", value: "16.95 %", highlight: true },
     { 
       label: "Profit", 
       value: "$0.04", 
@@ -44,7 +43,7 @@ export default function HoldingsGrid() {
     <>
       <div className="px-6 pb-8">
         <h2 className="text-foreground font-bold text-2xl mb-4">My holdings</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {holdings.map((item) => (
             <HoldingsCard key={item.label} {...item} />
           ))}
