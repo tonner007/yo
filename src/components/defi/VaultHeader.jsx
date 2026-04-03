@@ -21,7 +21,7 @@ export default function VaultHeader() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-4 ml-auto">
             <button 
               onClick={() => {
                 setDefaultModalTab("withdraw");

@@ -31,7 +31,7 @@ function NetworkDropdown({ selectedNetwork, onSelect }) {
     <div className="relative flex-1" ref={ref}>
       <div
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-3 bg-secondary border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-muted-foreground transition-colors select-none h-full"
+        className="flex items-center gap-4 bg-secondary border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-muted-foreground transition-colors select-none h-full"
       >
         <img
           src="/icons/usdc.png"
@@ -51,7 +51,7 @@ function NetworkDropdown({ selectedNetwork, onSelect }) {
             <div
               key={network.id}
               onClick={() => { onSelect(network.id); setOpen(false); }}
-              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-secondary transition-colors"
+              className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-secondary transition-colors"
             >
               <img
                 src="/icons/usdc.png"
@@ -146,7 +146,7 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit" }
               Select the asset you want to {activeTab}
             </p>
 
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               {/* Network dropdown */}
               <NetworkDropdown selectedNetwork={selectedNetwork} onSelect={setSelectedNetwork} />
 

@@ -33,7 +33,7 @@ export default function WalletConnectButton() {
 
   if (isConnected && address) {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <div className="border border-border rounded-full px-5 py-3 text-sm font-bold text-foreground flex items-center">
           {formatAddress(address)}
         </div>
@@ -51,7 +51,7 @@ export default function WalletConnectButton() {
     <button
       onClick={handleConnect}
       disabled={isConnecting}
-      className="bg-primary text-primary-foreground font-bold text-sm px-6 py-2.5 rounded-full flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+      className="bg-primary text-primary-foreground font-bold text-sm px-6 py-2.5 rounded-full flex items-center gap-4 hover:opacity-90 transition-opacity disabled:opacity-50"
     >
       <Wallet className="w-4 h-4" />
       {isConnecting ? 'Connecting...' : 'CONNECT WALLET'}

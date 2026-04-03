@@ -41,7 +41,7 @@ export default function NetworkSelector({ onNetworkChange }) {
       {/* Trigger */}
       <div
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-muted-foreground transition-colors select-none"
+        className="flex items-center gap-4 bg-card border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-muted-foreground transition-colors select-none"
       >
         <div className="asset-icon w-9 h-9">
           <img
@@ -65,7 +65,7 @@ export default function NetworkSelector({ onNetworkChange }) {
             <div
               key={network.id}
               onClick={() => handleSelect(network.id)}
-              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-secondary transition-colors"
+              className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-secondary transition-colors"
             >
               <div className="asset-icon w-8 h-8">
                 <img
