@@ -1,12 +1,12 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import HoldingsCard from "./HoldingsCard";
-import DepositModal from "./DepositModal";
 import { useWallet } from "../../contexts/WalletContext";
 import { useSevenDayApy } from "../../hooks/useSevenDayApy";
 import { useTotalBalance } from "../../hooks/useTotalBalance";
 import { useProfit } from "../../hooks/useProfit";
 import { useClaimableRewards } from "../../hooks/useClaimableRewards";
 
+const DepositModal = lazy(() => import("./DepositModal"));
 export default function HoldingsGrid() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [defaultModalTab, setDefaultModalTab] = useState("deposit");
@@ -96,16 +96,20 @@ export default function HoldingsGrid() {
           ))}
         </div>
       </div>
-      <DepositModal 
-        isOpen={isDepositModalOpen} 
-        onClose={() => setIsDepositModalOpen(false)}
-        defaultTab={defaultModalTab}
-        onTransactionComplete={() => {
-          refreshTotalBalance();
-          refreshProfit();
-          refreshClaimableRewards();
-        }}
-      />
+      {isDepositModalOpen && (
+        <Suspense fallback={null}>
+          <DepositModal 
+            isOpen={isDepositModalOpen} 
+            onClose={() => setIsDepositModalOpen(false)}
+            defaultTab={defaultModalTab}
+            onTransactionComplete={() => {
+              refreshTotalBalance();
+              refreshProfit();
+              refreshClaimableRewards();
+            }}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState } from "react";
 import NetworkSelector from "./NetworkSelector";
-import DepositModal from "./DepositModal";
 import HoldingsCard from "./HoldingsCard";
 import { useWallet } from "../../contexts/WalletContext";
 import { useBalance } from "../../hooks/useBalance";
 import { useSevenDayApy } from "../../hooks/useSevenDayApy";
 
+const DepositModal = lazy(() => import("./DepositModal"));
 export default function VaultHeader() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [defaultModalTab, setDefaultModalTab] = useState("deposit");
@@ -88,12 +88,16 @@ export default function VaultHeader() {
         
       </div>
       
-      <DepositModal 
-        isOpen={isDepositModalOpen} 
-        onClose={() => setIsDepositModalOpen(false)}
-        defaultTab={defaultModalTab}
-        onTransactionComplete={handleAfterTransaction}
-      />
+      {isDepositModalOpen && (
+        <Suspense fallback={null}>
+          <DepositModal 
+            isOpen={isDepositModalOpen} 
+            onClose={() => setIsDepositModalOpen(false)}
+            defaultTab={defaultModalTab}
+            onTransactionComplete={handleAfterTransaction}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

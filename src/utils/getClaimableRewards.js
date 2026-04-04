@@ -1,67 +1,37 @@
-import { YOUSD_VAULT_ADDRESS } from './getSevenDayApy';
+import { formatUnits, isAddress } from 'viem';
+import { getUserRewardsForNetwork } from '../lib/yo';
 
-const NETWORK_TO_CHAIN = {
-  ethereum: 'ethereum',
-  base: 'base',
-};
+function sumClaimableRewards(chainRewards) {
+  if (!chainRewards?.rewards?.length) return 0;
 
-function pickRewardValue(data) {
-  if (!data) return 0;
-
-  const candidates = [
-    data.claimableRewards,
-    data.pendingRewards,
-    data.rewards,
-    data.rewardBalance,
-    data.claimable,
-    data.data?.claimableRewards,
-    data.data?.pendingRewards,
-    data.data?.rewards,
-    data.data?.rewardBalance,
-    data.data?.claimable,
-    data.data?.unrealized?.formatted,
-    data.data?.unrealized?.raw,
-  ];
-
-  for (const candidate of candidates) {
-    if (candidate == null) continue;
-    if (typeof candidate === 'number') return candidate;
-    if (typeof candidate === 'string') {
-      const n = Number(candidate);
-      if (Number.isFinite(n)) return n;
+  return chainRewards.rewards.reduce((total, reward) => {
+    try {
+      const amount = BigInt(reward.amount ?? 0);
+      const claimed = BigInt(reward.claimed ?? 0);
+      const claimable = amount > claimed ? amount - claimed : 0n;
+      const decimals = Number(reward.token?.decimals ?? 18);
+      return total + Number(formatUnits(claimable, decimals));
+    } catch {
+      return total;
     }
-    if (typeof candidate === 'object') {
-      const nested = Number(candidate.formatted ?? candidate.raw ?? candidate.amount ?? candidate.value);
-      if (Number.isFinite(nested)) return nested;
-    }
-  }
-
-  return 0;
+  }, 0);
 }
 
 export async function getClaimableRewards(network, account) {
   try {
-    if (!account) {
+    if (!account || !isAddress(account)) {
       return { raw: 0, formatted: '$0.00', canClaim: false };
     }
 
-    const networkName = NETWORK_TO_CHAIN[network] ?? 'ethereum';
-    const url = `https://api.yo.xyz/api/v1/performance/user/${networkName}/${YOUSD_VAULT_ADDRESS}/${account}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Rewards API failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const raw = Number(pickRewardValue(data) ?? 0);
+    const chainRewards = await getUserRewardsForNetwork(network, account);
+    const raw = sumClaimableRewards(chainRewards);
     const safe = Number.isFinite(raw) ? raw : 0;
 
     return {
       raw: safe,
       formatted: `$${safe.toFixed(2)}`,
       canClaim: safe > 0,
-      source: data,
+      source: chainRewards,
     };
   } catch (error) {
     console.error('Failed to fetch claimable rewards:', error);

@@ -5,29 +5,24 @@ import { useWallet } from "../../contexts/WalletContext";
 const NETWORKS = [
   { id: "ethereum", label: "Ethereum", icon: "🟡" },
   { id: "base", label: "Base", icon: "🔵" },
-  { id: "arbitrum", label: "Arbitrum", icon: "🔴" },
 ];
 
 export default function WalletConnectButton() {
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
-  
   const {
     isConnected,
     isConnecting,
     userAddress,
     network,
     shortAddress,
-    currentDemoUser,
-    connectWallet,
     disconnectWallet,
     error,
+    ensureWeb3Ready,
+    web3Ready,
   } = useWallet();
 
   const handleConnect = async () => {
-    const result = await connectWallet(network);
-    if (result.success) {
-      setShowWalletDropdown(false);
-    }
+    await ensureWeb3Ready?.();
   };
 
   const handleDisconnect = () => {
@@ -36,6 +31,7 @@ export default function WalletConnectButton() {
   };
 
   const currentNetwork = NETWORKS.find(n => n.id === network);
+  const isPreparingWeb3 = !web3Ready && isConnecting;
 
   if (!isConnected) {
     return (
@@ -45,7 +41,7 @@ export default function WalletConnectButton() {
           disabled={isConnecting}
           className="border border-border rounded-full px-5 py-3 text-sm font-bold text-foreground flex items-center gap-2 hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isConnecting ? (
+          {isConnecting || isPreparingWeb3 ? (
             <>
               <div className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin"></div>
               Connecting...
@@ -81,14 +77,13 @@ export default function WalletConnectButton() {
 
         {showWalletDropdown && (
           <div className="absolute top-full mt-2 right-0 z-50 bg-card border border-border rounded-xl shadow-xl min-w-[280px] overflow-hidden">
-            {/* Wallet Info */}
             <div className="p-4 border-b border-border">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                   <Wallet className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <div className="font-bold text-foreground">{currentDemoUser?.name || "Demo User"}</div>
+                  <div className="font-bold text-foreground">Connected Wallet</div>
                   <div className="text-xs text-muted-foreground">{shortAddress}</div>
                 </div>
               </div>
@@ -100,22 +95,12 @@ export default function WalletConnectButton() {
                     {currentNetwork?.label}
                   </span>
                 </div>
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-muted-foreground">Balance:</span>
-                  <span className="font-medium">
-                    {currentDemoUser?.balance.toLocaleString('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                    }) || "$0.00"} USDC
-                  </span>
-                </div>
               </div>
             </div>
 
-            {/* Actions */}
             <div className="p-2">
               <a
-                href={`https://etherscan.io/address/${userAddress}`}
+                href={`${network === 'base' ? 'https://basescan.org' : 'https://etherscan.io'}/address/${userAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-secondary transition-colors text-sm"
@@ -133,12 +118,6 @@ export default function WalletConnectButton() {
               </button>
             </div>
 
-            {/* Demo Note */}
-            <div className="p-3 bg-yellow-500/10 border-t border-border">
-              <div className="text-xs text-yellow-600">
-                <strong>Demo Mode:</strong> Using simulated wallet connection. In production, this would connect to real wallets like MetaMask.
-              </div>
-            </div>
           </div>
         )}
       </div>

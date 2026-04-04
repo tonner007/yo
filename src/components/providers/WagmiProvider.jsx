@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { WagmiProvider as WagmiProviderBase } from 'wagmi';
 import { wagmiConfig } from '../../lib/wagmi';
 
-export function WagmiProvider({ children }) {
+export default function WagmiProvider({ children }) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (

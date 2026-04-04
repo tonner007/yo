@@ -1,16 +1,12 @@
+import { getUserHistoryForNetwork } from '../lib/yo';
 import { getTotalBalanceForNetwork } from './getTotalBalance';
-import { YOUSD_VAULT_ADDRESS } from './getSevenDayApy';
-
-const NETWORK_TO_CHAIN = {
-  ethereum: 'ethereum',
-  base: 'base',
-};
 
 function toAmountNumber(value) {
   if (value == null) return 0;
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
   if (typeof value === 'string') {
-    const n = Number(value);
+    const cleaned = value.replace(/[$,%\s,]/g, '');
+    const n = Number(cleaned);
     return Number.isFinite(n) ? n : 0;
   }
 
@@ -26,8 +22,8 @@ function toAmountNumber(value) {
   ];
 
   for (const candidate of candidates) {
-    const n = Number(candidate);
-    if (Number.isFinite(n)) return n;
+    const n = toAmountNumber(candidate);
+    if (Number.isFinite(n) && n !== 0) return n;
   }
 
   return 0;
@@ -64,16 +60,7 @@ export async function getNetDeposits(network, account) {
       return { deposits: 0, withdrawals: 0, netDeposits: 0, history: [] };
     }
 
-    const networkName = NETWORK_TO_CHAIN[network] ?? 'ethereum';
-    const url = `https://api.yo.xyz/api/v1/user/history/${networkName}/${YOUSD_VAULT_ADDRESS}/${account}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`History API failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const history = Array.isArray(data) ? data : (data?.items ?? data?.history ?? []);
+    const history = await getUserHistoryForNetwork(network, account);
     return { ...sumNetDeposits(history), history };
   } catch (error) {
     console.error('Failed to fetch net deposits:', error);
@@ -99,6 +86,7 @@ export async function getProfit(network, account) {
       profitFormatted: formatted,
       deposits: net.deposits,
       withdrawals: net.withdrawals,
+      history: net.history,
     };
   } catch (error) {
     console.error('Failed to compute profit:', error);
@@ -109,6 +97,7 @@ export async function getProfit(network, account) {
       profitFormatted: '$0.00',
       deposits: 0,
       withdrawals: 0,
+      history: [],
       error,
     };
   }

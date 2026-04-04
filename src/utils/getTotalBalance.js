@@ -1,6 +1,5 @@
-import { createYoClient } from '@yo-protocol/core';
 import { formatUnits, isAddress } from 'viem';
-import { YOUSD_VAULT_ADDRESS, getSupportedApyChainId } from './getSevenDayApy';
+import { getSupportedChainId, getYoClient, getSafeAddress, YOUSD_VAULT_ADDRESS } from '../lib/yo';
 
 export async function getTotalBalance(chainId, vaultAddress, account) {
   try {
@@ -9,13 +8,17 @@ export async function getTotalBalance(chainId, vaultAddress, account) {
         shares: 0n,
         assets: 0n,
         formatted: '$0.00',
+        raw: 0,
       };
     }
 
-    const client = createYoClient({ chainId });
-    const shares = await client.getShareBalance(vaultAddress, account);
+    const network = Object.entries({ ethereum: 1, base: 8453, arbitrum: 42161 }).find(([, id]) => id === chainId)?.[0] ?? 'ethereum';
+    const client = getYoClient(network);
+    const safeVaultAddress = getSafeAddress(vaultAddress);
+
+    const shares = await client.getShareBalance(safeVaultAddress, account);
     const assets = shares > 0n
-      ? await client.quotePreviewRedeem(vaultAddress, shares)
+      ? await client.quotePreviewRedeem(safeVaultAddress, shares)
       : 0n;
 
     const assetsNumber = Number(formatUnits(assets, 6));
@@ -39,6 +42,6 @@ export async function getTotalBalance(chainId, vaultAddress, account) {
 }
 
 export async function getTotalBalanceForNetwork(network, account) {
-  const chainId = getSupportedApyChainId(network);
+  const chainId = getSupportedChainId(network);
   return getTotalBalance(chainId, YOUSD_VAULT_ADDRESS, account);
 }

@@ -4,12 +4,12 @@ import { useState } from "react";
 export default function HoldingsCard({ 
   label, 
   value, 
-  subtitle, 
-  showInfo, 
-  highlight, 
-  onSubtitleClick,
+  subtitle = null, 
+  showInfo = false, 
+  highlight = false, 
+  onSubtitleClick = undefined,
   isLoading = false,
-  tooltip,
+  tooltip = undefined,
   valueClassName = "text-foreground"
 }) {
   const [showTooltip, setShowTooltip] = useState(false);

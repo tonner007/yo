@@ -238,7 +238,7 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
               <div className="flex-1 bg-secondary border border-border rounded-xl px-4 py-3 flex flex-col justify-between">
                 <input
                   type="text"
-                  inputmode="decimal"
+                  inputMode="decimal"
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                   placeholder="0"

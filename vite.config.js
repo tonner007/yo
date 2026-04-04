@@ -47,6 +47,47 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    chunkSizeWarningLimit: 700,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+
+          if (
+            id.includes('@rainbow-me/rainbowkit') ||
+            id.includes('/wagmi/') ||
+            id.includes('/viem/') ||
+            id.includes('@yo-protocol/core')
+          ) {
+            return 'web3';
+          }
+
+          if (
+            id.includes('@radix-ui') ||
+            id.includes('lucide-react') ||
+            id.includes('framer-motion') ||
+            id.includes('recharts') ||
+            id.includes('embla-carousel-react')
+          ) {
+            return 'ui-vendor';
+          }
+
+          if (
+            id.includes('react-router-dom') ||
+            id.includes('@tanstack/react-query') ||
+            id.includes('react-hook-form') ||
+            id.includes('@hookform/resolvers') ||
+            id.includes('zod')
+          ) {
+            return 'app-vendor';
+          }
+
+          if (id.includes('/react/') || id.includes('/react-dom/')) {
+            return 'react-vendor';
+          }
+        },
+      },
+    },
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],

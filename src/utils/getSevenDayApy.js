@@ -1,28 +1,24 @@
-import { createYoClient } from '@yo-protocol/core';
+import { getSupportedChainId, getVaultSnapshotForNetwork, parseFormattedValue, YOUSD_VAULT_ADDRESS } from '../lib/yo';
 
-export const YOUSD_VAULT_ADDRESS = '0x0000000f2eb9f69274678c76222b35eec7588a65';
-
-const CHAIN_IDS = {
-  ethereum: 1,
-  base: 8453,
-};
+export { YOUSD_VAULT_ADDRESS };
 
 export function getSupportedApyChainId(network = 'ethereum') {
-  return CHAIN_IDS[network] ?? 1;
+  return getSupportedChainId(network);
 }
 
-export async function getSevenDayApy(chainId, vaultAddress = YOUSD_VAULT_ADDRESS) {
+export async function getSevenDayApy(chainIdOrNetwork, vaultAddress = YOUSD_VAULT_ADDRESS) {
+  const network = typeof chainIdOrNetwork === 'number'
+    ? Object.entries({ ethereum: 1, base: 8453, arbitrum: 42161 }).find(([, id]) => id === chainIdOrNetwork)?.[0] ?? 'ethereum'
+    : chainIdOrNetwork;
+
   try {
-    const client = createYoClient({ chainId });
-    const snapshot = await client.getVaultSnapshot(vaultAddress);
-    const apy = Number(
-      snapshot?.apy ?? snapshot?.stats?.yield?.['7d'] ?? 0
-    );
+    const snapshot = await getVaultSnapshotForNetwork(network, vaultAddress);
+    const apy = parseFormattedValue(snapshot?.stats?.yield?.['7d']);
 
     return {
-      raw: Number.isFinite(apy) ? apy : 0,
-      formatted: `${Number.isFinite(apy) ? apy : 0}`,
-      percentage: `${(Number.isFinite(apy) ? apy : 0).toFixed(2)}%`,
+      raw: apy,
+      formatted: `${apy}`,
+      percentage: `${apy.toFixed(2)}%`,
       source: snapshot,
     };
   } catch (error) {
