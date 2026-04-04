@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Wallet, LogOut, ChevronDown, ExternalLink } from "lucide-react";
 import { useWallet } from "../../contexts/WalletContext";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 const NETWORKS = [
   { id: "ethereum", label: "Ethereum", icon: "🟡" },
@@ -16,13 +17,46 @@ export default function WalletConnectButton() {
     network,
     shortAddress,
     disconnectWallet,
+    connectWallet,
     error,
     ensureWeb3Ready,
     web3Ready,
   } = useWallet();
+  
+  const { openConnectModal } = useConnectModal();
 
   const handleConnect = async () => {
-    await ensureWeb3Ready?.();
+    console.log('[WalletConnectButton] handleConnect clicked');
+    
+    try {
+      // First, load web3 chunk via connectWallet
+      const result = await connectWallet?.();
+      console.log('[WalletConnectButton] connectWallet result:', result);
+      
+      // Wait for RainbowKit modal to become available
+      let retries = 0;
+      const maxRetries = 20; // 2 seconds total
+      
+      while (retries < maxRetries) {
+        console.log(`[WalletConnectButton] checking openConnectModal (attempt ${retries + 1}/${maxRetries}):`, !!openConnectModal);
+        
+        if (openConnectModal && typeof openConnectModal === 'function') {
+          console.log('[WalletConnectButton] openConnectModal found! Opening modal...');
+          openConnectModal();
+          return;
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retries++;
+      }
+      
+      console.warn('[WalletConnectButton] openConnectModal not available after waiting');
+      
+      // If modal still not available, try one more time on next click
+      // (user will click again and it should work)
+    } catch (err) {
+      console.error('[WalletConnectButton] error:', err);
+    }
   };
 
   const handleDisconnect = () => {

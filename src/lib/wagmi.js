@@ -4,7 +4,7 @@ import { base, mainnet } from 'wagmi/chains';
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'YO App - DeFi Dashboard',
-  projectId: '3e0a3b1c4b5a5a5a5a5a5a5a5a5a5a5a', // Public test projectId
+  projectId: 'c26c9023adafab5ea77eb04a0f7d050e', // Your project ID
   chains: [mainnet, base],
   transports: {
     [mainnet.id]: http(),

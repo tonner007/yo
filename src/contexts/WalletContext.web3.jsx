@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useAccount, useChainId, useDisconnect, useSwitchChain, useWalletClient } from 'wagmi';
+import { useAccount, useChainId, useDisconnect, useSwitchChain, useWalletClient, useConnect } from 'wagmi';
 import { mainnet, base } from 'wagmi/chains';
 import { WalletProvider as BaseWalletProvider } from './WalletContext';
 
@@ -19,6 +19,7 @@ export function WalletWeb3Provider({ children, ensureWeb3Ready }) {
   const { disconnectAsync } = useDisconnect();
   const { switchChainAsync } = useSwitchChain();
   const { data: walletClient } = useWalletClient();
+  const { connectAsync } = useConnect();
 
   const network = NETWORK_BY_CHAIN_ID[chainId] ?? 'ethereum';
   const error = !isConnected
@@ -28,7 +29,13 @@ export function WalletWeb3Provider({ children, ensureWeb3Ready }) {
       : 'Unsupported network. Please switch to Ethereum or Base.';
 
   const connectWallet = useCallback(async () => {
+    console.log('[WalletContext] connectWallet called');
+    
     await ensureWeb3Ready?.();
+    console.log('[WalletContext] web3 ready');
+    
+    // RainbowKit will handle the modal automatically
+    // We don't call connectAsync() because RainbowKit has its own modal system
     return {
       success: false,
       error: 'Use the Connect Wallet button to open MetaMask / RainbowKit.',
