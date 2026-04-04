@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wallet, LogOut, ChevronDown, Check, ExternalLink } from "lucide-react";
+import { Wallet, LogOut, ChevronDown, ExternalLink } from "lucide-react";
 import { useWallet } from "../../contexts/WalletContext";
 
 const NETWORKS = [
@@ -9,7 +9,6 @@ const NETWORKS = [
 ];
 
 export default function WalletConnectButton() {
-  const [showNetworkDropdown, setShowNetworkDropdown] = useState(false);
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   
   const {
@@ -21,7 +20,6 @@ export default function WalletConnectButton() {
     currentDemoUser,
     connectWallet,
     disconnectWallet,
-    switchNetwork,
     error,
   } = useWallet();
 
@@ -35,13 +33,6 @@ export default function WalletConnectButton() {
   const handleDisconnect = () => {
     disconnectWallet();
     setShowWalletDropdown(false);
-  };
-
-  const handleNetworkSelect = async (networkId) => {
-    const result = await switchNetwork(networkId);
-    if (result.success) {
-      setShowNetworkDropdown(false);
-    }
   };
 
   const currentNetwork = NETWORKS.find(n => n.id === network);
@@ -77,38 +68,7 @@ export default function WalletConnectButton() {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      {/* Network Selector */}
-      <div className="relative">
-        <button
-          onClick={() => setShowNetworkDropdown(!showNetworkDropdown)}
-          className="border border-border rounded-full px-4 py-2 text-sm font-medium text-foreground flex items-center gap-2 hover:bg-secondary transition-colors"
-        >
-          <span className="text-lg">{currentNetwork?.icon || "🌐"}</span>
-          <span>{currentNetwork?.label || network}</span>
-          <ChevronDown className={`w-3 h-3 transition-transform ${showNetworkDropdown ? "rotate-180" : ""}`} />
-        </button>
-
-        {showNetworkDropdown && (
-          <div className="absolute top-full mt-2 left-0 z-50 bg-card border border-border rounded-xl shadow-xl min-w-[180px] overflow-hidden">
-            {NETWORKS.map((net) => (
-              <button
-                key={net.id}
-                onClick={() => handleNetworkSelect(net.id)}
-                className="flex items-center justify-between w-full px-4 py-3 hover:bg-secondary transition-colors text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">{net.icon}</span>
-                  <span className="text-sm font-medium">{net.label}</span>
-                </div>
-                {network === net.id && <Check className="w-4 h-4 text-primary" />}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Wallet Button */}
+    <div className="flex items-center">
       <div className="relative">
         <button
           onClick={() => setShowWalletDropdown(!showWalletDropdown)}

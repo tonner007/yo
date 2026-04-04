@@ -86,20 +86,6 @@ export default function VaultHeader() {
           </div>
         </div>
         
-        {/* Wallet connection status */}
-        <div className="mt-4 text-sm text-muted-foreground">
-          {isConnected ? (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span>Wallet connected to {network} • Balance updates automatically</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-              <span>Connect wallet to see your actual USDC balance</span>
-            </div>
-          )}
-        </div>
       </div>
       
       <DepositModal 
