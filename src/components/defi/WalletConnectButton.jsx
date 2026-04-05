@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Wallet, LogOut, ChevronDown, ExternalLink } from "lucide-react";
 import { useWallet } from "../../contexts/WalletContext";
 
@@ -10,6 +10,8 @@ const NETWORKS = [
 export default function WalletConnectButton() {
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   const [connectRequested, setConnectRequested] = useState(false);
+  const dropdownRef = useRef(null);
+  const buttonRef = useRef(null);
   const {
     isConnected,
     isConnecting,
@@ -50,6 +52,36 @@ export default function WalletConnectButton() {
 
     return () => clearTimeout(timer);
   }, [connectRequested, web3Ready, isConnected, connectWallet]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!showWalletDropdown) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target) &&
+        buttonRef.current && 
+        !buttonRef.current.contains(event.target)
+      ) {
+        setShowWalletDropdown(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setShowWalletDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showWalletDropdown]);
 
   const handleDisconnect = () => {
     disconnectWallet();
@@ -93,6 +125,7 @@ export default function WalletConnectButton() {
     <div className="flex items-center">
       <div className="relative">
         <button
+          ref={buttonRef}
           onClick={() => setShowWalletDropdown(!showWalletDropdown)}
           className="border border-border rounded-full px-5 py-3 text-sm font-bold text-foreground flex items-center gap-2 hover:bg-secondary transition-colors"
         >
@@ -102,7 +135,10 @@ export default function WalletConnectButton() {
         </button>
 
         {showWalletDropdown && (
-          <div className="absolute top-full mt-2 right-0 z-50 bg-card border border-border rounded-xl shadow-xl min-w-[280px] overflow-hidden">
+          <div 
+            ref={dropdownRef}
+            className="absolute top-full mt-2 right-0 z-50 bg-card border border-border rounded-xl shadow-xl min-w-[280px] overflow-hidden"
+          >
             <div className="p-4 border-b border-border">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">

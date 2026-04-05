@@ -35,7 +35,7 @@ export default function TopBar() {
     <div className="px-6 py-4 w-full">
       <div className="header-actions flex items-center justify-center gap-4">
         <div className="border border-border rounded-full px-5 py-3 text-sm font-bold text-foreground flex items-center">
-          TOTAL TVL: <span className="text-white">{isLoading ? "Loading..." : tvl}</span>
+          TOTAL TVL: <span className="text-white ml-1">{isLoading ? "Loading..." : tvl}</span>
         </div>
         
         <WalletConnectButton />
