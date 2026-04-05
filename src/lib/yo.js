@@ -71,7 +71,7 @@ export async function getVaultSnapshotForNetwork(network = 'ethereum', vaultAddr
     const safeVaultAddress = getSafeAddress(vaultAddress);
     
     // Debug log
-    console.log('[YO SDK] Fetching vault snapshot for:', safeVaultAddress);
+    // Fetching vault snapshot
     
     return client.getVaultSnapshot(/** @type {`0x${string}`} */ (safeVaultAddress));
   } catch (error) {

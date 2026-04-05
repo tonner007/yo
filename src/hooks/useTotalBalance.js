@@ -25,7 +25,7 @@ export function useTotalBalance(userAddress, network = 'ethereum', refreshKey = 
     const cached = balanceCache.get(cacheKey);
     
     if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      console.log('[useTotalBalance] Using cached balance');
+      // Using cached balance
       setTotalBalance(cached.formatted);
       setTotalBalanceRaw(cached.raw);
       setIsLoading(false);

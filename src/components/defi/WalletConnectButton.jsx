@@ -24,13 +24,10 @@ export default function WalletConnectButton() {
   } = useWallet();
 
   const handleConnect = async () => {
-    console.log('[WalletConnectButton] handleConnect clicked');
     setConnectRequested(true);
     try {
-      const result = await connectWallet?.();
-      console.log('[WalletConnectButton] connectWallet result:', result);
+      await connectWallet?.();
     } catch (err) {
-      console.error('[WalletConnectButton] error:', err);
       setConnectRequested(false);
     }
   };
@@ -45,8 +42,7 @@ export default function WalletConnectButton() {
 
     const timer = setTimeout(async () => {
       try {
-        const result = await connectWallet?.();
-        console.log('[WalletConnectButton] retry connect after web3 ready:', result);
+        await connectWallet?.();
       } finally {
         setConnectRequested(false);
       }

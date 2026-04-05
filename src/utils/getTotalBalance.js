@@ -72,14 +72,14 @@ export async function getTotalBalance(chainId, vaultAddress, account) {
         } catch (error) {
           lastError = error;
           if (i === 0) {
-            console.log('First attempt failed, retrying in 1s...');
+            // First attempt failed, retrying in 1s...
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
         }
       }
       
       if (lastError) {
-        console.warn('Failed to get shares after retries:', lastError.message);
+        // Failed to get shares after retries
         shares = 0n;
       }
       
@@ -100,7 +100,7 @@ export async function getTotalBalance(chainId, vaultAddress, account) {
           ? await yoClient.quotePreviewRedeem(safeVaultAddress, shares)
           : 0n;
       } catch (error) {
-        console.warn('Failed to get quotePreviewRedeem:', error.message);
+        // Failed to get quotePreviewRedeem
         assets = shares;
       }
 

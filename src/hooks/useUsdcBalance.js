@@ -7,7 +7,7 @@ import { useBalance } from './useBalance';
  * @deprecated Use useBalance instead
  */
 export function useUsdcBalance(options = {}) {
-  console.warn('useUsdcBalance is deprecated, use useBalance instead');
+  // useUsdcBalance is deprecated, use useBalance instead
   
   const { userAddress, network = 'ethereum' } = options;
   const balance = useBalance(userAddress, network);
@@ -31,7 +31,7 @@ export function useUsdcBalance(options = {}) {
  * @deprecated Use useBalance instead
  */
 export function useAvailableToDeposit(userAddress, network = 'ethereum') {
-  console.warn('useAvailableToDeposit is deprecated, use useBalance instead');
+  // useAvailableToDeposit is deprecated, use useBalance instead
   
   const balance = useBalance(userAddress, network);
   

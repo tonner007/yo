@@ -32,14 +32,14 @@ export default function VaultHeader() {
   const handleAfterTransaction = () => {
     refreshBalance();
     refreshApy();
-    console.log('Transaction completed, balance and APY refreshed');
+    // Transaction completed, balance and APY refreshed
   };
   
   const handleDepositClick = () => {
     if (!isConnected) {
       // Pokud není připojená peněženka, můžeme zobrazit connect modal
       // Prozatím otevřeme deposit modal a uživatel uvidí $0.00
-      console.log("Wallet not connected, showing deposit modal with $0.00");
+      // Wallet not connected, showing deposit modal with $0.00
     }
     setDefaultModalTab("deposit");
     setIsDepositModalOpen(true);

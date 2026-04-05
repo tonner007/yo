@@ -78,7 +78,7 @@ export const db = {
          * Filtrování entit
          */
         filter: async (query = {}) => {
-          console.log(`[Mock] Filter entities: ${entityName}`, query);
+          // Filter entities
           return [];
         },
 
@@ -86,7 +86,7 @@ export const db = {
          * Získání entity podle ID
          */
         get: async (id) => {
-          console.log(`[Mock] Get entity: ${entityName}/${id}`);
+          // Get entity
           return null;
         },
 
@@ -94,7 +94,7 @@ export const db = {
          * Vytvoření nové entity
          */
         create: async (data) => {
-          console.log(`[Mock] Create entity: ${entityName}`, data);
+          // Create entity
           const id = `mock_${Date.now()}`;
           return { id, ...data };
         },
@@ -103,7 +103,7 @@ export const db = {
          * Aktualizace entity
          */
         update: async (id, data) => {
-          console.log(`[Mock] Update entity: ${entityName}/${id}`, data);
+          // Update entity
           return { id, ...data };
         },
 
@@ -111,7 +111,7 @@ export const db = {
          * Smazání entity
          */
         delete: async (id) => {
-          console.log(`[Mock] Delete entity: ${entityName}/${id}`);
+          // Delete entity
           return { success: true };
         }
       };
@@ -124,7 +124,7 @@ export const db = {
        * Nahrání souboru
        */
       UploadFile: async (file) => {
-        console.log('[Mock] Upload file:', file.name);
+        // Upload file
         // Vrátí mock URL
         return { 
           file_url: `https://mock-cdn.example.com/files/${Date.now()}_${file.name}`,

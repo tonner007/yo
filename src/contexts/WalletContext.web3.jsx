@@ -25,7 +25,6 @@ export function WalletWeb3Provider({ children, ensureWeb3Ready }) {
 
   useEffect(() => {
     if (pendingOpenRef.current && openConnectModal) {
-      console.log('[WalletContext] auto-opening connect modal after mount');
       pendingOpenRef.current = false;
       openConnectModal();
     }
@@ -39,18 +38,13 @@ export function WalletWeb3Provider({ children, ensureWeb3Ready }) {
       : 'Unsupported network. Please switch to Ethereum or Base.';
 
   const connectWallet = useCallback(async () => {
-    console.log('[WalletContext] connectWallet called');
-
     await ensureWeb3Ready?.();
-    console.log('[WalletContext] web3 ready');
 
     if (openConnectModal && typeof openConnectModal === 'function') {
-      console.log('[WalletContext] openConnectModal found immediately. Opening modal...');
       openConnectModal();
       return { success: true };
     }
 
-    console.log('[WalletContext] modal not ready yet, scheduling auto-open');
     pendingOpenRef.current = true;
 
     return { success: true, pending: true };

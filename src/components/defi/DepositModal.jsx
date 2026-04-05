@@ -117,7 +117,7 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
         switchNetwork,
       });
 
-      console.log("Deposit transaction completed", result);
+      // Deposit transaction completed
 
       if (onTransactionComplete) {
         onTransactionComplete();
@@ -152,7 +152,7 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
         switchNetwork,
       });
 
-      console.log("Withdraw transaction completed", result);
+      // Withdraw transaction completed
 
       if (onTransactionComplete) {
         onTransactionComplete();

@@ -119,7 +119,7 @@ export function useBalance(userAddress, network = 'ethereum') {
       
       // Check if viem/web3 is not loaded yet (lazy loading)
       if (error.message?.includes('viem') || error.message?.includes('createPublicClient')) {
-        console.log('Viem not loaded yet, will retry later');
+        // Viem not loaded yet, will retry later
         // Don't show error, just show loading/0
         setState({
           value: 0,
