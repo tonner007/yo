@@ -60,7 +60,6 @@ export default function HoldingsGrid() {
       isLoading: isProfitLoading,
       showInfo: true,
       tooltip: "Current profit or loss versus your net deposits",
-      valueClassName: profitRaw > 0 ? 'text-green-500' : profitRaw < 0 ? 'text-red-500' : 'text-foreground',
       subtitle: "Claim profit",
       onSubtitleClick: () => {}
     },

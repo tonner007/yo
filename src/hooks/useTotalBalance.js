@@ -3,7 +3,7 @@ import { getTotalBalanceForNetwork } from '../utils/getTotalBalance';
 
 // Hook-level cache to reduce rerenders (data cache is also in getTotalBalance.js)
 const balanceCache = new Map();
-const CACHE_DURATION = 60000; // 60 seconds
+const CACHE_DURATION = 300000; // 5 minutes
 
 export function useTotalBalance(userAddress, network = 'ethereum', refreshKey = 0) {
   const [totalBalance, setTotalBalance] = useState('$0.00');
@@ -59,9 +59,9 @@ export function useTotalBalance(userAddress, network = 'ethereum', refreshKey = 
     refreshTotalBalance();
   }, [refreshTotalBalance, refreshKey]);
 
-  // Less frequent polling (every 5 minutes)
+  // Less frequent polling (every 10 minutes)
   useEffect(() => {
-    const interval = setInterval(refreshTotalBalance, 300000);
+    const interval = setInterval(refreshTotalBalance, 600000);
     return () => clearInterval(interval);
   }, [refreshTotalBalance]);
 

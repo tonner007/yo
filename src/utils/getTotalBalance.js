@@ -4,7 +4,7 @@ import { getSupportedChainId, getYoClient, getSafeAddress, YOUSD_VAULT_ADDRESS }
 
 const balancePromiseCache = new Map();
 const balanceResultCache = new Map();
-const BALANCE_CACHE_MS = 60000;
+const BALANCE_CACHE_MS = 600000; // 10 minutes
 
 export async function getTotalBalance(chainId, vaultAddress, account) {
   try {
@@ -60,7 +60,7 @@ export async function getTotalBalance(chainId, vaultAddress, account) {
       // Import getShareBalance from YO SDK
       const { getShareBalance } = await import('@yo-protocol/core');
       
-      // Get shares (with simple retry)
+      // Get shares (with single retry and exponential backoff)
       let shares;
       let lastError;
       
@@ -72,8 +72,8 @@ export async function getTotalBalance(chainId, vaultAddress, account) {
         } catch (error) {
           lastError = error;
           if (i === 0) {
-            // First attempt failed, retrying in 1s...
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // First attempt failed, wait before retry
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
         }
       }

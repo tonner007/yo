@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getClaimableRewards } from '../utils/getClaimableRewards';
+import { getClaimableRewardsWithFallback } from '../utils/getClaimableRewardsWithFallback';
 
 export function useClaimableRewards(userAddress, network = 'ethereum', refreshKey = 0) {
   const [claimableRewards, setClaimableRewards] = useState('$0.00');
@@ -9,7 +9,7 @@ export function useClaimableRewards(userAddress, network = 'ethereum', refreshKe
 
   const refreshClaimableRewards = useCallback(async () => {
     setIsLoading(true);
-    const result = await getClaimableRewards(network, userAddress);
+    const result = await getClaimableRewardsWithFallback(network, userAddress);
     setClaimableRewards(result.formatted ?? '$0.00');
     setClaimableRewardsRaw(Number(result.raw ?? 0));
     setCanClaim(Boolean(result.canClaim));
@@ -21,7 +21,7 @@ export function useClaimableRewards(userAddress, network = 'ethereum', refreshKe
   }, [refreshClaimableRewards, refreshKey]);
 
   useEffect(() => {
-    const interval = setInterval(refreshClaimableRewards, 60000);
+    const interval = setInterval(refreshClaimableRewards, 300000); // 5 minutes
     return () => clearInterval(interval);
   }, [refreshClaimableRewards]);
 
