@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Wallet, LogOut, ChevronDown, ExternalLink } from "lucide-react";
 import { useWallet } from "../../contexts/WalletContext";
 
@@ -9,6 +9,7 @@ const NETWORKS = [
 
 export default function WalletConnectButton() {
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
+  const [connectRequested, setConnectRequested] = useState(false);
   const {
     isConnected,
     isConnecting,
@@ -24,20 +25,35 @@ export default function WalletConnectButton() {
 
   const handleConnect = async () => {
     console.log('[WalletConnectButton] handleConnect clicked');
+    setConnectRequested(true);
     try {
       const result = await connectWallet?.();
       console.log('[WalletConnectButton] connectWallet result:', result);
-      
-      // If result is {success: true} but modal didn't open, 
-      // it means web3 is still loading. Show better feedback.
-      if (result?.success === true && result?.error?.includes('RainbowKit not ready')) {
-        console.log('[WalletConnectButton] web3 loaded, but RainbowKit needs more time');
-        // Could show a toast or keep loading state
-      }
     } catch (err) {
       console.error('[WalletConnectButton] error:', err);
+      setConnectRequested(false);
     }
   };
+
+  useEffect(() => {
+    if (!connectRequested) return;
+    if (!web3Ready) return;
+    if (isConnected) {
+      setConnectRequested(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const result = await connectWallet?.();
+        console.log('[WalletConnectButton] retry connect after web3 ready:', result);
+      } finally {
+        setConnectRequested(false);
+      }
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [connectRequested, web3Ready, isConnected, connectWallet]);
 
   const handleDisconnect = () => {
     disconnectWallet();
@@ -45,7 +61,7 @@ export default function WalletConnectButton() {
   };
 
   const currentNetwork = NETWORKS.find(n => n.id === network);
-  const isPreparingWeb3 = !web3Ready && isConnecting;
+  const isPreparingWeb3 = !web3Ready && (isConnecting || connectRequested);
 
   if (!isConnected) {
     return (
