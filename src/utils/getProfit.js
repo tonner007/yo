@@ -1,4 +1,4 @@
-import { getUserHistoryForNetwork } from '../lib/yo';
+import { getUserHistoryForNetwork, getUserPerformanceForNetwork } from '../lib/yo';
 import { getTotalBalanceForNetwork } from './getTotalBalance';
 
 function toAmountNumber(value) {
@@ -88,6 +88,32 @@ export async function getNetDeposits(network, account) {
 
 export async function getProfit(network, account) {
   try {
+    // Try to get performance data from YO SDK first (more accurate)
+    const performance = await getUserPerformanceForNetwork(network, account);
+    
+    if (performance && performance.unrealized) {
+      // Use YO SDK performance data (what YO app uses)
+      const unrealized = Number(performance.unrealized.formatted ?? 0);
+      const realized = Number(performance.realized.formatted ?? 0);
+      const totalProfit = unrealized + realized;
+      const abs = Math.abs(totalProfit).toFixed(2);
+      const formatted = totalProfit < 0 ? `-$${abs}` : `$${abs}`;
+      
+      return {
+        totalBalance: 0, // Will be filled by hook
+        netDeposits: 0,
+        profitRaw: totalProfit,
+        profitFormatted: formatted,
+        deposits: 0,
+        withdrawals: 0,
+        history: [],
+        source: 'yo-performance',
+        unrealized,
+        realized,
+      };
+    }
+    
+    // Fallback to our own calculation if YO performance not available
     const [balance, net] = await Promise.all([
       getTotalBalanceForNetwork(network, account),
       getNetDeposits(network, account),
@@ -107,6 +133,7 @@ export async function getProfit(network, account) {
       deposits: net.deposits,
       withdrawals: net.withdrawals,
       history: net.history,
+      source: 'calculated',
     };
   } catch (error) {
     console.error('Failed to compute profit:', error);
@@ -119,6 +146,7 @@ export async function getProfit(network, account) {
       withdrawals: 0,
       history: [],
       error,
+      source: 'error',
     };
   }
 }

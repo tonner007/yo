@@ -93,23 +93,46 @@ export async function getTotalBalance(chainId, vaultAddress, account) {
       }
       
       const yoClient = await getYoClient(network);
-      let assets;
       
+      // Try to get market value (what YO app shows)
+      let marketValueUSD = 0;
+      try {
+        // Get user performance for unrealized profit
+        const performance = await yoClient.getUserPerformance(safeVaultAddress, account);
+        if (performance && performance.unrealized) {
+          // Calculate market value: shares * pricePerShare (implied from unrealized + net deposits)
+          // For now, use a simple approach: get net deposits from history
+          const history = await yoClient.getUserHistory(safeVaultAddress, account, 100);
+          const netDeposits = sumNetDepositsFromHistory(history);
+          
+          // Market value = net deposits + unrealized profit
+          marketValueUSD = netDeposits + Number(performance.unrealized.formatted || 0);
+        }
+      } catch (error) {
+        console.warn('Failed to get market value, falling back to redeem value:', error);
+      }
+      
+      // Fallback to redeem value if market value not available
+      let assets;
       try {
         assets = shares > 0n
           ? await yoClient.quotePreviewRedeem(safeVaultAddress, shares)
           : 0n;
       } catch (error) {
-        // Failed to get quotePreviewRedeem
         assets = shares;
       }
 
-      const assetsNumber = Number(formatUnits(assets, 6));
+      const redeemValueUSD = Number(formatUnits(assets, 6));
+      const finalValueUSD = marketValueUSD > 0 ? marketValueUSD : redeemValueUSD;
+      
       const result = {
         shares,
         assets,
-        formatted: `$${assetsNumber.toFixed(2)}`,
-        raw: assetsNumber,
+        formatted: `$${finalValueUSD.toFixed(2)}`,
+        raw: finalValueUSD,
+        source: marketValueUSD > 0 ? 'market' : 'redeem',
+        redeemValue: redeemValueUSD,
+        marketValue: marketValueUSD > 0 ? marketValueUSD : null,
       };
 
       balanceResultCache.set(cacheKey, { value: result, timestamp: Date.now() });
@@ -135,6 +158,22 @@ export async function getTotalBalance(chainId, vaultAddress, account) {
       error: error.message,
     };
   }
+}
+
+// Helper to sum net deposits from history (similar to getProfit.js)
+function sumNetDepositsFromHistory(history = []) {
+  let deposits = 0;
+  let withdrawals = 0;
+
+  for (const item of history) {
+    const type = String(item?.type ?? '').toLowerCase();
+    const amount = item?.assets?.formatted ? Number(item.assets.formatted) : 0;
+
+    if (type.includes('deposit')) deposits += amount;
+    if (type.includes('withdraw') || type.includes('redeem')) withdrawals += amount;
+  }
+
+  return deposits - withdrawals;
 }
 
 export async function getTotalBalanceForNetwork(network, account) {
