@@ -46,7 +46,7 @@ export function useBalance(userAddress, network = 'ethereum') {
     error: null,
   });
 
-  const fetchBalance = useCallback(async () => {
+  const fetchBalance = useCallback(async (signal) => {
     if (!userAddress || !userAddress.startsWith('0x')) {
       setState({
         value: 0,
@@ -84,7 +84,7 @@ export function useBalance(userAddress, network = 'ethereum') {
         transport: http(),
       });
 
-      // Get USDC balance
+      // Get USDC balance with abort signal support
       const [balance, decimals] = await Promise.all([
         publicClient.readContract({
           address: usdcAddress,
@@ -98,6 +98,11 @@ export function useBalance(userAddress, network = 'ethereum') {
           functionName: 'decimals',
         }),
       ]);
+
+      // Check if request was aborted
+      if (signal?.aborted) {
+        return;
+      }
 
       // Convert from wei to USDC
       const value = Number(formatUnits(balance, decimals));
@@ -115,6 +120,11 @@ export function useBalance(userAddress, network = 'ethereum') {
       });
 
     } catch (error) {
+      // Don't log aborted requests
+      if (error.name === 'AbortError' || signal?.aborted) {
+        return;
+      }
+      
       console.error('Failed to fetch USDC balance:', error);
       
       // Check if viem/web3 is not loaded yet (lazy loading)
@@ -140,11 +150,19 @@ export function useBalance(userAddress, network = 'ethereum') {
   }, [userAddress, network]);
 
   useEffect(() => {
-    fetchBalance();
+    const abortController = new AbortController();
+    
+    fetchBalance(abortController.signal);
     
     // Refresh every 30 seconds
-    const interval = setInterval(fetchBalance, 30000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      fetchBalance(abortController.signal);
+    }, 30000);
+    
+    return () => {
+      abortController.abort();
+      clearInterval(interval);
+    };
   }, [fetchBalance]);
 
   return {
