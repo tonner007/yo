@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check, X } from "lucide-react";
 import { useWallet } from "../../contexts/WalletContext";
 import { executeDeposit } from "../../utils/deposit";
-import { executeWithdraw } from "../../utils/withdraw";
+import { requestRedeem } from "../../utils/requestRedeem";
 
 const USDC_ADDRESSES = {
   base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
@@ -79,21 +79,51 @@ function NetworkDropdown({ selectedNetwork, onSelect, disabled = false, tooltip 
   );
 }
 
-export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", onTransactionComplete }) {
+function isUserRejectedError(error) {
+  const rawMessage = String(error?.message || '');
+  const message = rawMessage.toLowerCase();
+  const code = error?.code;
+  const details = String(error?.details || '').toLowerCase();
+  const shortMessage = String(error?.shortMessage || '').toLowerCase();
+  const causeMessage = String(error?.cause?.message || '').toLowerCase();
+  const combined = [message, details, shortMessage, causeMessage].join(' | ');
+
+  return (
+    code === 4001 ||
+    code === 'ACTION_REJECTED' ||
+    combined.includes('user rejected') ||
+    combined.includes('user denied') ||
+    combined.includes('request rejected') ||
+    combined.includes('rejected the request') ||
+    combined.includes('transaction rejected') ||
+    combined.includes('signature rejected') ||
+    combined.includes('cancelled') ||
+    combined.includes('canceled') ||
+    combined.includes('denied transaction signature') ||
+    combined.includes('user rejected the request') ||
+    combined.includes('user rejected the transaction') ||
+    combined.includes('user rejected the action') ||
+    combined.includes('reject')
+  );
+}
+
+export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", presetAmount = null, skipApproval = false, onTransactionComplete }) {
   const { userAddress, walletClient, switchNetwork } = useWallet();
   
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [selectedNetwork, setSelectedNetwork] = useState("base");
-  const [depositAmount, setDepositAmount] = useState("");
+  const [depositAmount, setDepositAmount] = useState(presetAmount || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Reset amount and update tab when modal opens
   useEffect(() => {
     if (isOpen) {
-      setDepositAmount("");
+      if (!presetAmount) {
+        setDepositAmount("");
+      }
       setActiveTab(defaultTab);
     }
-  }, [isOpen, defaultTab]);
+  }, [isOpen, defaultTab, presetAmount]);
 
   const amount = parseFloat(depositAmount);
   const isValid = !isNaN(amount) && amount > 0;
@@ -126,8 +156,10 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
       onClose();
       alert(`Deposit completed onchain. Amount: $${amount.toFixed(2)} USDC`);
     } catch (error) {
-      console.error("Deposit failed:", error);
-      alert(error?.message || "Deposit failed. Please try again.");
+      if (!isUserRejectedError(error)) {
+        console.error("Deposit failed:", error);
+        alert(error?.message || "Deposit failed. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -144,9 +176,19 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
     try {
       setIsSubmitting(true);
 
-      const result = await executeWithdraw({
+      // Get exchange rate from debug values
+      const { getWithdrawDebugValuesForNetwork } = await import("../../utils/getWithdrawDebugValues");
+      const debugValues = await getWithdrawDebugValuesForNetwork(selectedNetwork, userAddress);
+      const exchangeRateQuote = Number(debugValues.exchangeRateQuoteRaw ?? 0);
+
+      if (!exchangeRateQuote || exchangeRateQuote <= 0) {
+        throw new Error('Exchange rate unavailable');
+      }
+
+      const result = await requestRedeem({
         network: selectedNetwork,
-        amount,
+        profitUsd: amount, // User entered amount
+        exchangeRateQuote,
         userAddress,
         walletClient,
         switchNetwork,
@@ -164,8 +206,10 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
         : amount;
       alert(`Withdraw completed onchain. Received ~$${assetsOut.toFixed(2)} USDC`);
     } catch (error) {
-      console.error("Withdraw failed:", error);
-      alert(error?.message || "Withdraw failed. Please try again.");
+      if (!isUserRejectedError(error)) {
+        console.error("Withdraw failed:", error);
+        alert(error?.message || "Withdraw failed. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }

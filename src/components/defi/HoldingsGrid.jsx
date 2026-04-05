@@ -5,12 +5,45 @@ import { useSevenDayApy } from "../../hooks/useSevenDayApy";
 import { useTotalBalance } from "../../hooks/useTotalBalance";
 import { useProfit } from "../../hooks/useProfit";
 import { useClaimableRewards } from "../../hooks/useClaimableRewards";
+import WithdrawDebugValues from "./WithdrawDebugValues";
+import { getWithdrawDebugValuesForNetwork } from "../../utils/getWithdrawDebugValues";
+import { requestRedeem } from "../../utils/requestRedeem";
 
 const DepositModal = lazy(() => import("./DepositModal"));
+function isUserRejectedError(error) {
+  const combined = [
+    String(error?.message || ''),
+    String(error?.details || ''),
+    String(error?.shortMessage || ''),
+    String(error?.cause?.message || ''),
+  ].join(' | ').toLowerCase();
+  return (
+    error?.code === 4001 ||
+    error?.code === 'ACTION_REJECTED' ||
+    combined.includes('user rejected') ||
+    combined.includes('user denied') ||
+    combined.includes('request rejected') ||
+    combined.includes('reject') ||
+    combined.includes('cancelled') ||
+    combined.includes('canceled')
+  );
+}
+
+function isRateLimitError(error) {
+  const combined = [
+    String(error?.message || ''),
+    String(error?.details || ''),
+    String(error?.shortMessage || ''),
+    String(error?.cause?.message || ''),
+  ].join(' | ').toLowerCase();
+  return combined.includes('429') || combined.includes('rate limit') || combined.includes('over rate limit');
+}
+
 export default function HoldingsGrid() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [defaultModalTab, setDefaultModalTab] = useState("deposit");
-  const { network, userAddress } = useWallet();
+  const [isClaimingProfit, setIsClaimingProfit] = useState(false);
+  const { network, userAddress, walletClient, switchNetwork } = useWallet();
   const { apyRaw } = useSevenDayApy(network);
   const {
     totalBalance,
@@ -30,6 +63,88 @@ export default function HoldingsGrid() {
     isLoading: isClaimableRewardsLoading,
     refreshClaimableRewards,
   } = useClaimableRewards(userAddress, network);
+
+  const handleClaimProfit = async () => {
+    if (!userAddress || !walletClient || isClaimingProfit || !profitRaw || profitRaw <= 0) {
+      return;
+    }
+
+    try {
+      setIsClaimingProfit(true);
+      const debugValues = await getWithdrawDebugValuesForNetwork(network, userAddress);
+      const exchangeRateQuote = Number(debugValues.exchangeRateQuoteRaw ?? 0);
+
+      if (!exchangeRateQuote || exchangeRateQuote <= 0) {
+        throw new Error('Exchange rate unavailable');
+      }
+
+      await executeClaimProfit({
+        network,
+        profitUsd: Number(profitRaw),
+        exchangeRateQuote,
+        userAddress,
+        walletClient,
+        switchNetwork,
+      });
+
+      refreshTotalBalance();
+      refreshProfit();
+      refreshClaimableRewards();
+    } catch (error) {
+      if (!isUserRejectedError(error)) {
+        console.error('Claim profit failed:', error);
+        if (isRateLimitError(error)) {
+          alert('Base RPC je dočasně přetížené (429). Zkus Claim profit za pár sekund znovu.');
+        } else {
+          alert(error?.message || error?.shortMessage || 'Claim profit failed. Please try again.');
+        }
+      }
+    } finally {
+      setIsClaimingProfit(false);
+    }
+  };
+
+  const handleRequestRedeem = async () => {
+    if (!userAddress || !walletClient || isClaimingProfit || !profitRaw || profitRaw <= 0) {
+      return;
+    }
+
+    try {
+      setIsClaimingProfit(true);
+      const debugValues = await getWithdrawDebugValuesForNetwork(network, userAddress);
+      const exchangeRateQuote = Number(debugValues.exchangeRateQuoteRaw ?? 0);
+
+      if (!exchangeRateQuote || exchangeRateQuote <= 0) {
+        throw new Error('Exchange rate unavailable');
+      }
+
+      await requestRedeem({
+        network,
+        profitUsd: Number(profitRaw),
+        exchangeRateQuote,
+        userAddress,
+        walletClient,
+        switchNetwork,
+      });
+
+      refreshTotalBalance();
+      refreshProfit();
+      refreshClaimableRewards();
+      
+      alert('Profit claimed successfully!');
+    } catch (error) {
+      if (!isUserRejectedError(error)) {
+        console.error('Request redeem failed:', error);
+        if (isRateLimitError(error)) {
+          alert('Base RPC je dočasně přetížené (429). Zkus Claim profit za pár sekund znovu.');
+        } else {
+          alert(error?.message || error?.shortMessage || 'Claim profit failed. Please try again.');
+        }
+      }
+    } finally {
+      setIsClaimingProfit(false);
+    }
+  };
 
   const projectedYearlyEarnings = useMemo(() => {
     const total = Number(totalBalanceRaw || 0);
@@ -60,8 +175,8 @@ export default function HoldingsGrid() {
       isLoading: isProfitLoading,
       showInfo: true,
       tooltip: "Current profit or loss versus your net deposits",
-      subtitle: "Claim profit",
-      onSubtitleClick: () => {}
+      subtitle: profitRaw > 0 ? "Claim profit" : null,
+      onSubtitleClick: profitRaw > 0 ? handleRequestRedeem : undefined
     },
     { 
       label: "Projected 1 Y Earnings", 
@@ -95,12 +210,16 @@ export default function HoldingsGrid() {
           ))}
         </div>
       </div>
+      <WithdrawDebugValues userAddress={userAddress} network={network} />
       {isDepositModalOpen && (
         <Suspense fallback={null}>
           <DepositModal 
+            key={`deposit-modal-${defaultModalTab}`}
             isOpen={isDepositModalOpen} 
             onClose={() => setIsDepositModalOpen(false)}
             defaultTab={defaultModalTab}
+            presetAmount={null}
+            skipApproval={false}
             onTransactionComplete={() => {
               refreshTotalBalance();
               refreshProfit();

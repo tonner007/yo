@@ -1,6 +1,6 @@
 import { createPublicClient, fallback, http, parseUnits } from 'viem';
 import { mainnet, base, arbitrum } from 'viem/chains';
-import { maxRedeem, prepareRedeem, prepareRedeemWithApproval, quotePreviewWithdraw, waitForRedeemReceipt } from '@yo-protocol/core';
+import { prepareRedeemWithApproval, waitForRedeemReceipt, YO_GATEWAY_ADDRESS } from '@yo-protocol/core';
 import { getSupportedChainId, YOUSD_VAULT_ADDRESS } from '../lib/yo';
 
 const CHAIN_MAP = {
@@ -12,12 +12,13 @@ const CHAIN_MAP = {
 function getTransport(chainId) {
   if (chainId === 8453) {
     return fallback([
-      http('https://mainnet.base.org'),
       http('https://base.publicnode.com'),
+      http('https://base-rpc.publicnode.com'),
       http('https://base.gateway.tenderly.co'),
+      http('https://1rpc.io/base'),
+      http('https://mainnet.base.org'),
     ]);
   }
-
   return http();
 }
 
@@ -55,37 +56,16 @@ async function buildTxRequest(publicClient, walletClient, targetChain, userAddre
       ...(fees.gasPrice ? { gasPrice: fees.gasPrice } : {}),
     };
   } catch (estimateError) {
-    console.warn('[withdraw] Gas estimation failed, falling back to raw request:', estimateError);
+    console.warn('[claimProfit] Gas estimation failed, falling back to raw request:', estimateError);
     return baseRequest;
   }
 }
 
-async function checkAllowance(publicClient, vaultAddress, gatewayAddress, userAddress, neededShares) {
-  try {
-    const allowance = await publicClient.readContract({
-      address: vaultAddress,
-      abi: [{
-        type: 'function',
-        name: 'allowance',
-        inputs: [
-          { name: 'owner', type: 'address' },
-          { name: 'spender', type: 'address' },
-        ],
-        outputs: [{ name: '', type: 'uint256' }],
-        stateMutability: 'view',
-      }],
-      functionName: 'allowance',
-      args: [userAddress, gatewayAddress],
-    });
-    return allowance >= neededShares;
-  } catch {
-    return false;
-  }
-}
-
-export async function executeWithdraw({ network = 'base', amount, userAddress, walletClient, switchNetwork, skipApproval = false }) {
+export async function executeClaimProfit({ network = 'base', profitUsd, exchangeRateQuote, userAddress, walletClient, switchNetwork }) {
   if (!userAddress) throw new Error('Wallet not connected');
   if (!walletClient) throw new Error('Wallet client unavailable');
+  if (!profitUsd || profitUsd <= 0) throw new Error('No profit available to claim');
+  if (!exchangeRateQuote || exchangeRateQuote <= 0) throw new Error('Exchange rate unavailable');
 
   const chainId = getSupportedChainId(network);
   const targetChain = CHAIN_MAP[chainId];
@@ -99,44 +79,26 @@ export async function executeWithdraw({ network = 'base', amount, userAddress, w
   }
 
   const publicClient = getPublicClient(chainId);
-  const amountUnits = parseUnits(String(amount), 6);
+  const sharesAmount = profitUsd / exchangeRateQuote;
+  const sharesUnits = parseUnits(sharesAmount.toFixed(6), 6);
 
-  const estimatedShares = await quotePreviewWithdraw(publicClient, YOUSD_VAULT_ADDRESS, amountUnits);
-  const maxShares = await maxRedeem(publicClient, YOUSD_VAULT_ADDRESS, userAddress);
-
-  if (estimatedShares > maxShares) {
-    throw new Error('Insufficient YOUSD balance for this withdraw');
+  let prepared;
+  try {
+    prepared = await prepareRedeemWithApproval(publicClient, {
+      vault: YOUSD_VAULT_ADDRESS,
+      owner: userAddress,
+      shares: sharesUnits,
+      recipient: userAddress,
+    });
+  } catch (error) {
+    if (String(error?.message || '').includes('429') || String(error?.details || '').includes('429')) {
+      throw new Error('Base RPC je dočasně přetížené (429). Zkus Claim profit za pár sekund znovu.');
+    }
+    throw error;
   }
 
-  const gatewayAddress = '0xF1EeE0957267b1A474323Ff9CfF7719E964969FA';
-  
-  // Check if we have enough allowance
-  const hasEnoughAllowance = await checkAllowance(
-    publicClient,
-    YOUSD_VAULT_ADDRESS,
-    gatewayAddress,
-    userAddress,
-    estimatedShares
-  );
-  
-  let txs;
-  if (skipApproval || hasEnoughAllowance) {
-    // Direct redeem (no approval needed)
-    const prepared = await prepareRedeem(publicClient, {
-      vault: YOUSD_VAULT_ADDRESS,
-      owner: userAddress,
-      shares: estimatedShares,
-      recipient: userAddress,
-    });
-    txs = Array.isArray(prepared) ? prepared : [prepared];
-  } else {
-    // Standard withdraw with approval
-    txs = await prepareRedeemWithApproval(publicClient, {
-      vault: YOUSD_VAULT_ADDRESS,
-      owner: userAddress,
-      shares: estimatedShares,
-      recipient: userAddress,
-    });
+  const txs = Array.isArray(prepared) ? prepared : [prepared];  if (!txs.length || !txs[0]?.to) {
+    throw new Error('Claim profit transaction could not be prepared');
   }
 
   const hashList = [];
@@ -154,20 +116,21 @@ export async function executeWithdraw({ network = 'base', amount, userAddress, w
       redeemReceipt = await waitForRedeemReceipt(publicClient, hash);
     }
   }
-
   if (!redeemReceipt) {
-    throw new Error('Withdraw transaction finished without redeem receipt');
+    throw new Error('Claim profit transaction finished without redeem receipt');
   }
 
   if (!redeemReceipt.instant) {
-    throw new Error('Redeem was not instant. Pending redemption flow is not supported in the app yet.');
+    throw new Error('Claim profit was not instant. Pending redemption flow is not supported in the app yet.');
   }
 
   return {
     success: true,
     hashes: hashList,
     gateway: YO_GATEWAY_ADDRESS,
-    shares: estimatedShares,
+    shares: sharesUnits,
+    sharesFormatted: sharesAmount,
+    expectedUsdc: profitUsd,
     redeemReceipt,
   };
 }
