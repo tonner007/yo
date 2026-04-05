@@ -64,14 +64,38 @@ export async function executeDeposit({ network = 'base', amount, userAddress, wa
   const hashList = [];
 
   for (const tx of txs) {
-    const hash = await walletClient.sendTransaction({
+    const baseRequest = {
       account: walletClient.account,
       to: tx.to,
       data: tx.data,
       value: tx.value ?? 0n,
       chain: targetChain,
-    });
+    };
 
+    let request = baseRequest;
+
+    try {
+      const gas = await publicClient.estimateGas({
+        account: userAddress,
+        to: tx.to,
+        data: tx.data,
+        value: tx.value ?? 0n,
+      });
+
+      const fees = await publicClient.estimateFeesPerGas();
+
+      request = {
+        ...baseRequest,
+        gas: (gas * 120n) / 100n,
+        ...(fees.maxFeePerGas ? { maxFeePerGas: fees.maxFeePerGas } : {}),
+        ...(fees.maxPriorityFeePerGas ? { maxPriorityFeePerGas: fees.maxPriorityFeePerGas } : {}),
+        ...(fees.gasPrice ? { gasPrice: fees.gasPrice } : {}),
+      };
+    } catch (estimateError) {
+      console.warn('[deposit] Gas estimation failed, falling back to raw request:', estimateError);
+    }
+
+    const hash = await walletClient.sendTransaction(request);
     hashList.push(hash);
     await publicClient.waitForTransactionReceipt({ hash });
   }
