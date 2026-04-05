@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check, X } from "lucide-react";
 import { useWallet } from "../../contexts/WalletContext";
+import { executeDeposit } from "../../utils/deposit";
 
 const USDC_ADDRESSES = {
   base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
@@ -78,11 +79,12 @@ function NetworkDropdown({ selectedNetwork, onSelect, disabled = false, tooltip 
 }
 
 export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", onTransactionComplete }) {
-  const { userAddress, isConnected } = useWallet();
+  const { userAddress, walletClient, switchNetwork } = useWallet();
   
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [selectedNetwork, setSelectedNetwork] = useState("base");
   const [depositAmount, setDepositAmount] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Reset amount and update tab when modal opens
   useEffect(() => {
@@ -96,45 +98,37 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
   const isValid = !isNaN(amount) && amount > 0;
 
   const handleDeposit = async () => {
-    if (!isValid) return;
-    
-    // Check if wallet is connected
+    if (!isValid || isSubmitting) return;
+
     if (!userAddress) {
       alert("Please connect your wallet first");
       return;
     }
-    
-    // Prepared for blockchain integration
-    console.log("Deposit:", {
-      token: "USDC",
-      network: selectedNetwork,
-      address: USDC_ADDRESSES[selectedNetwork],
-      amount: amount,
-      userAddress,
-    });
-    
-    // Simulace transakce
+
     try {
-      // Zde by byla skutečná transakce přes smart contract
-      // Pro demo pouze simulace
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log("Deposit transaction simulated successfully");
-      
-      // Zavolání callbacku pro aktualizaci UI
+      setIsSubmitting(true);
+
+      const result = await executeDeposit({
+        network: selectedNetwork,
+        amount,
+        userAddress,
+        walletClient,
+        switchNetwork,
+      });
+
+      console.log("Deposit transaction completed", result);
+
       if (onTransactionComplete) {
         onTransactionComplete();
       }
-      
-      // Zavření modalu
+
       onClose();
-      
-      // Zobrazení success message
-      alert(`Successfully deposited $${amount.toFixed(2)} USDC on ${selectedNetwork}`);
-      
+      alert(`Deposit completed onchain. Amount: $${amount.toFixed(2)} USDC`);
     } catch (error) {
       console.error("Deposit failed:", error);
-      alert("Deposit failed. Please try again.");
+      alert(error?.message || "Deposit failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -254,15 +248,19 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
           {/* Action button */}
           <button
             onClick={activeTab === "deposit" ? handleDeposit : handleWithdraw}
-            disabled={!isValid || !userAddress}
+            disabled={!isValid || !userAddress || isSubmitting}
             className={`w-full py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all ${
-              isValid && userAddress
+              isValid && userAddress && !isSubmitting
                 ? "bg-primary text-primary-foreground hover:opacity-90"
                 : "bg-secondary text-muted-foreground cursor-not-allowed opacity-50"
             }`}
             title={!userAddress ? "Connect wallet first" : undefined}
           >
-            {!userAddress ? "Connect Wallet First" : (activeTab === "deposit" ? "Deposit" : "Withdraw")}
+            {!userAddress
+              ? "Connect Wallet First"
+              : isSubmitting
+                ? (activeTab === "deposit" ? "Processing Deposit..." : "Processing Withdraw...")
+                : (activeTab === "deposit" ? "Deposit" : "Withdraw")}
           </button>
         </div>
       </div>

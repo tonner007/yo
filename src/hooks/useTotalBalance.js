@@ -19,15 +19,6 @@ export function useTotalBalance(userAddress, network = 'ethereum', refreshKey = 
       return;
     }
 
-    // DEBUG: For testing, return hardcoded value for your address
-    if (userAddress.toLowerCase() === '0xe4ea9f1696ed0dc3640ffc59a7ba21fe9c409109') {
-      console.log('[useTotalBalance] Using debug value for your address');
-      setTotalBalance('$11.70');
-      setTotalBalanceRaw(11.70);
-      setIsLoading(false);
-      return;
-    }
-
     // Check cache
     const cacheKey = `${userAddress}:${network}`;
     const now = Date.now();

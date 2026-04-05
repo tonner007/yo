@@ -10,20 +10,31 @@ function toAmountNumber(value) {
     return Number.isFinite(n) ? n : 0;
   }
 
-  const candidates = [
-    value.amount,
-    value.assets,
-    value.assetAmount,
-    value.underlyingAmount,
-    value.netAmount,
-    value.value,
-    value.raw,
-    value.formatted,
-  ];
+  if (typeof value === 'object') {
+    if (value.assets?.formatted != null) {
+      const n = Number(value.assets.formatted);
+      if (Number.isFinite(n)) return n;
+    }
 
-  for (const candidate of candidates) {
-    const n = toAmountNumber(candidate);
-    if (Number.isFinite(n) && n !== 0) return n;
+    if (value.assets?.raw != null) {
+      const raw = Number(value.assets.raw);
+      if (Number.isFinite(raw)) return raw / 1_000_000;
+    }
+
+    const candidates = [
+      value.amount,
+      value.assetAmount,
+      value.underlyingAmount,
+      value.netAmount,
+      value.value,
+      value.formatted,
+      value.raw,
+    ];
+
+    for (const candidate of candidates) {
+      const n = toAmountNumber(candidate);
+      if (Number.isFinite(n) && n !== 0) return n;
+    }
   }
 
   return 0;
@@ -75,13 +86,15 @@ export async function getProfit(network, account) {
       getNetDeposits(network, account),
     ]);
 
-    const profitRaw = Number(balance.raw ?? 0) - Number(net.netDeposits ?? 0);
+    const totalBalanceUSD = Number(balance.raw ?? 0);
+    const netDepositsUSD = Number(net.netDeposits ?? 0);
+    const profitRaw = totalBalanceUSD - netDepositsUSD;
     const abs = Math.abs(profitRaw).toFixed(2);
     const formatted = profitRaw < 0 ? `-$${abs}` : `$${abs}`;
 
     return {
-      totalBalance: Number(balance.raw ?? 0),
-      netDeposits: Number(net.netDeposits ?? 0),
+      totalBalance: totalBalanceUSD,
+      netDeposits: netDepositsUSD,
       profitRaw,
       profitFormatted: formatted,
       deposits: net.deposits,
