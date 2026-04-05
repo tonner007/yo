@@ -19,7 +19,7 @@ export function useProfit(userAddress, network = 'ethereum', refreshKey = 0) {
   }, [refreshProfit, refreshKey]);
 
   useEffect(() => {
-    const interval = setInterval(refreshProfit, 60000);
+    const interval = setInterval(refreshProfit, 300000);
     return () => clearInterval(interval);
   }, [refreshProfit]);
 

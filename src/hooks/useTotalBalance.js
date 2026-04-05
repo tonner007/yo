@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { getTotalBalanceForNetwork } from '../utils/getTotalBalance';
 
-// Simple cache to reduce RPC calls
+// Hook-level cache to reduce rerenders (data cache is also in getTotalBalance.js)
 const balanceCache = new Map();
-const CACHE_DURATION = 30000; // 30 seconds
+const CACHE_DURATION = 60000; // 60 seconds
 
 export function useTotalBalance(userAddress, network = 'ethereum', refreshKey = 0) {
   const [totalBalance, setTotalBalance] = useState('$0.00');
@@ -59,9 +59,9 @@ export function useTotalBalance(userAddress, network = 'ethereum', refreshKey = 
     refreshTotalBalance();
   }, [refreshTotalBalance, refreshKey]);
 
-  // Less frequent polling (every 2 minutes)
+  // Less frequent polling (every 5 minutes)
   useEffect(() => {
-    const interval = setInterval(refreshTotalBalance, 120000);
+    const interval = setInterval(refreshTotalBalance, 300000);
     return () => clearInterval(interval);
   }, [refreshTotalBalance]);
 
