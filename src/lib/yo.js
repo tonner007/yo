@@ -11,7 +11,7 @@ async function getYoSDK() {
   return yoSDKPromise;
 }
 
-export let YOUSD_VAULT_ADDRESS = '0x1234567890123456789012345678901234567890';
+export let YOUSD_VAULT_ADDRESS = '0x0000000f2eb9f69274678c76222b35eec7588a65'; // Real YO USD vault address
 
 async function ensureVaultAddress() {
   if (YOUSD_VAULT_ADDRESS.startsWith('0x123')) {
@@ -65,10 +65,19 @@ export function parseFormattedValue(value) {
 }
 
 export async function getVaultSnapshotForNetwork(network = 'ethereum', vaultAddress = YOUSD_VAULT_ADDRESS) {
-  await ensureVaultAddress();
-  const client = await getYoClient(network);
-  const safeVaultAddress = getSafeAddress(vaultAddress);
-  return client.getVaultSnapshot(/** @type {`0x${string}`} */ (safeVaultAddress));
+  try {
+    await ensureVaultAddress();
+    const client = await getYoClient(network);
+    const safeVaultAddress = getSafeAddress(vaultAddress);
+    
+    // Debug log
+    console.log('[YO SDK] Fetching vault snapshot for:', safeVaultAddress);
+    
+    return client.getVaultSnapshot(/** @type {`0x${string}`} */ (safeVaultAddress));
+  } catch (error) {
+    console.error('[YO SDK] Failed to get vault snapshot:', error);
+    throw error;
+  }
 }
 
 export async function getUserHistoryForNetwork(network = 'ethereum', account, vaultAddress = YOUSD_VAULT_ADDRESS, limit) {

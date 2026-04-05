@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Wallet, LogOut, ChevronDown, ExternalLink } from "lucide-react";
 import { useWallet } from "../../contexts/WalletContext";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 const NETWORKS = [
   { id: "ethereum", label: "Ethereum", icon: "🟡" },
@@ -22,38 +21,19 @@ export default function WalletConnectButton() {
     ensureWeb3Ready,
     web3Ready,
   } = useWallet();
-  
-  const { openConnectModal } = useConnectModal();
 
   const handleConnect = async () => {
     console.log('[WalletConnectButton] handleConnect clicked');
-    
     try {
-      // First, load web3 chunk via connectWallet
       const result = await connectWallet?.();
       console.log('[WalletConnectButton] connectWallet result:', result);
       
-      // Wait for RainbowKit modal to become available
-      let retries = 0;
-      const maxRetries = 20; // 2 seconds total
-      
-      while (retries < maxRetries) {
-        console.log(`[WalletConnectButton] checking openConnectModal (attempt ${retries + 1}/${maxRetries}):`, !!openConnectModal);
-        
-        if (openConnectModal && typeof openConnectModal === 'function') {
-          console.log('[WalletConnectButton] openConnectModal found! Opening modal...');
-          openConnectModal();
-          return;
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 100));
-        retries++;
+      // If result is {success: true} but modal didn't open, 
+      // it means web3 is still loading. Show better feedback.
+      if (result?.success === true && result?.error?.includes('RainbowKit not ready')) {
+        console.log('[WalletConnectButton] web3 loaded, but RainbowKit needs more time');
+        // Could show a toast or keep loading state
       }
-      
-      console.warn('[WalletConnectButton] openConnectModal not available after waiting');
-      
-      // If modal still not available, try one more time on next click
-      // (user will click again and it should work)
     } catch (err) {
       console.error('[WalletConnectButton] error:', err);
     }

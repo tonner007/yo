@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { useAccount, useChainId, useDisconnect, useSwitchChain, useWalletClient, useConnect } from 'wagmi';
+import { useAccount, useChainId, useDisconnect, useSwitchChain, useWalletClient } from 'wagmi';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { mainnet, base } from 'wagmi/chains';
 import { WalletProvider as BaseWalletProvider } from './WalletContext';
 
@@ -19,7 +20,7 @@ export function WalletWeb3Provider({ children, ensureWeb3Ready }) {
   const { disconnectAsync } = useDisconnect();
   const { switchChainAsync } = useSwitchChain();
   const { data: walletClient } = useWalletClient();
-  const { connectAsync } = useConnect();
+  const { openConnectModal } = useConnectModal();
 
   const network = NETWORK_BY_CHAIN_ID[chainId] ?? 'ethereum';
   const error = !isConnected
@@ -34,13 +35,29 @@ export function WalletWeb3Provider({ children, ensureWeb3Ready }) {
     await ensureWeb3Ready?.();
     console.log('[WalletContext] web3 ready');
     
-    // RainbowKit will handle the modal automatically
-    // We don't call connectAsync() because RainbowKit has its own modal system
+    // Wait for RainbowKit modal to become available
+    let retries = 0;
+    const maxRetries = 20; // 2 seconds total
+    
+    while (retries < maxRetries) {
+      console.log(`[WalletContext] checking openConnectModal (attempt ${retries + 1}/${maxRetries}):`, !!openConnectModal);
+      
+      if (openConnectModal && typeof openConnectModal === 'function') {
+        console.log('[WalletContext] openConnectModal found! Opening modal...');
+        openConnectModal();
+        return { success: true };
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+      retries++;
+    }
+    
+    console.warn('[WalletContext] openConnectModal not available after waiting');
     return {
       success: false,
-      error: 'Use the Connect Wallet button to open MetaMask / RainbowKit.',
+      error: 'RainbowKit not ready yet. Please try again.',
     };
-  }, [ensureWeb3Ready]);
+  }, [ensureWeb3Ready, openConnectModal]);
 
   const disconnectWallet = useCallback(async () => {
     await disconnectAsync();
