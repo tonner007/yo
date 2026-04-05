@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useEffect, useRef } from 'react';
 import { useAccount, useChainId, useDisconnect, useSwitchChain, useWalletClient } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { mainnet, base } from 'wagmi/chains';
@@ -21,6 +21,15 @@ export function WalletWeb3Provider({ children, ensureWeb3Ready }) {
   const { switchChainAsync } = useSwitchChain();
   const { data: walletClient } = useWalletClient();
   const { openConnectModal } = useConnectModal();
+  const pendingOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (pendingOpenRef.current && openConnectModal) {
+      console.log('[WalletContext] auto-opening connect modal after mount');
+      pendingOpenRef.current = false;
+      openConnectModal();
+    }
+  }, [openConnectModal]);
 
   const network = NETWORK_BY_CHAIN_ID[chainId] ?? 'ethereum';
   const error = !isConnected
@@ -31,32 +40,20 @@ export function WalletWeb3Provider({ children, ensureWeb3Ready }) {
 
   const connectWallet = useCallback(async () => {
     console.log('[WalletContext] connectWallet called');
-    
+
     await ensureWeb3Ready?.();
     console.log('[WalletContext] web3 ready');
-    
-    // Wait for RainbowKit modal to become available
-    let retries = 0;
-    const maxRetries = 20; // 2 seconds total
-    
-    while (retries < maxRetries) {
-      console.log(`[WalletContext] checking openConnectModal (attempt ${retries + 1}/${maxRetries}):`, !!openConnectModal);
-      
-      if (openConnectModal && typeof openConnectModal === 'function') {
-        console.log('[WalletContext] openConnectModal found! Opening modal...');
-        openConnectModal();
-        return { success: true };
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
-      retries++;
+
+    if (openConnectModal && typeof openConnectModal === 'function') {
+      console.log('[WalletContext] openConnectModal found immediately. Opening modal...');
+      openConnectModal();
+      return { success: true };
     }
-    
-    console.warn('[WalletContext] openConnectModal not available after waiting');
-    return {
-      success: false,
-      error: 'RainbowKit not ready yet. Please try again.',
-    };
+
+    console.log('[WalletContext] modal not ready yet, scheduling auto-open');
+    pendingOpenRef.current = true;
+
+    return { success: true, pending: true };
   }, [ensureWeb3Ready, openConnectModal]);
 
   const disconnectWallet = useCallback(async () => {

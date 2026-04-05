@@ -1,6 +1,25 @@
 import { lazy, Suspense, useCallback, useMemo, useState, useEffect } from 'react';
 import { WalletProvider } from '@/contexts/WalletContext';
 
+let web3ReadyPromise = null;
+let resolveWeb3ReadyPromise = null;
+
+function createWeb3ReadyPromise() {
+  if (!web3ReadyPromise) {
+    web3ReadyPromise = new Promise((resolve) => {
+      resolveWeb3ReadyPromise = resolve;
+    });
+  }
+  return web3ReadyPromise;
+}
+
+function markWeb3Ready() {
+  if (resolveWeb3ReadyPromise) {
+    resolveWeb3ReadyPromise();
+    resolveWeb3ReadyPromise = null;
+  }
+}
+
 // Prefetch web3 chunks after page load
 const prefetchWeb3 = () => {
   // Start loading web3 chunks in background
@@ -12,6 +31,10 @@ const LazyWagmiProvider = lazy(() => import('./WagmiProvider'));
 const LazyWalletWeb3Provider = lazy(() => import('@/contexts/WalletContext.web3').then((module) => ({ default: module.WalletWeb3Provider })));
 
 function Web3Providers({ children, ensureWeb3Ready, fallback }) {
+  useEffect(() => {
+    markWeb3Ready();
+  }, []);
+
   return (
     <Suspense fallback={fallback}>
       <LazyWagmiProvider>
@@ -37,7 +60,9 @@ export function Web3ProviderGate({ children }) {
   }, []);
 
   const ensureWeb3Ready = useCallback(async () => {
+    createWeb3ReadyPromise();
     setWeb3Enabled(true);
+    await web3ReadyPromise;
     return { success: true };
   }, []);
 

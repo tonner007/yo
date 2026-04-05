@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check, X } from "lucide-react";
 import { useWallet } from "../../contexts/WalletContext";
 import { executeDeposit } from "../../utils/deposit";
+import { executeWithdraw } from "../../utils/withdraw";
 
 const USDC_ADDRESSES = {
   base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
@@ -133,41 +134,40 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
   };
   
   const handleWithdraw = async () => {
-    if (!isValid) return;
-    
-    // Check if wallet is connected
+    if (!isValid || isSubmitting) return;
+
     if (!userAddress) {
       alert("Please connect your wallet first");
       return;
     }
-    
-    console.log("Withdraw:", {
-      token: "USDC",
-      network: selectedNetwork,
-      amount: amount,
-      userAddress,
-    });
-    
-    // Simulace transakce
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log("Withdraw transaction simulated successfully");
-      
-      // Zavolání callbacku pro aktualizaci UI
+      setIsSubmitting(true);
+
+      const result = await executeWithdraw({
+        network: selectedNetwork,
+        amount,
+        userAddress,
+        walletClient,
+        switchNetwork,
+      });
+
+      console.log("Withdraw transaction completed", result);
+
       if (onTransactionComplete) {
         onTransactionComplete();
       }
-      
-      // Zavření modalu
+
       onClose();
-      
-      // Zobrazení success message
-      alert(`Successfully withdrew $${amount.toFixed(2)} USDC from ${selectedNetwork}`);
-      
+      const assetsOut = result?.redeemReceipt?.assetsOrRequestId != null
+        ? Number(result.redeemReceipt.assetsOrRequestId) / 1_000_000
+        : amount;
+      alert(`Withdraw completed onchain. Received ~$${assetsOut.toFixed(2)} USDC`);
     } catch (error) {
       console.error("Withdraw failed:", error);
-      alert("Withdraw failed. Please try again.");
+      alert(error?.message || "Withdraw failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
