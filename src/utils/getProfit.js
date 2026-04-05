@@ -11,16 +11,23 @@ function toAmountNumber(value) {
   }
 
   if (typeof value === 'object') {
+    // Prefer assets.formatted (USD value) from YO SDK history
     if (value.assets?.formatted != null) {
       const n = Number(value.assets.formatted);
       if (Number.isFinite(n)) return n;
     }
 
-    if (value.assets?.raw != null) {
+    // If only raw is available, we need to know the decimals
+    // But YO SDK history always provides formatted, so this is fallback
+    if (value.assets?.raw != null && value.assets?.decimals != null) {
       const raw = Number(value.assets.raw);
-      if (Number.isFinite(raw)) return raw / 1_000_000;
+      const decimals = Number(value.assets.decimals);
+      if (Number.isFinite(raw) && Number.isFinite(decimals)) {
+        return raw / Math.pow(10, decimals);
+      }
     }
 
+    // Legacy fallback for other formats
     const candidates = [
       value.amount,
       value.assetAmount,
