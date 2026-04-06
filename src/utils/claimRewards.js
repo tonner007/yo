@@ -1,21 +1,22 @@
 import { getYoClient } from '../lib/yo';
 import { CHAIN_MAP, getPublicClient } from './web3';
-import { buildTxRequest, ensureWalletChain } from './tx';
+import { ensureWalletChain, sendTransactions } from './tx';
 
 export async function executeClaimRewards({ network = 'base', userAddress, walletClient, switchNetwork }) {
   if (!userAddress) throw new Error('Wallet not connected');
   if (!walletClient) throw new Error('Wallet client unavailable');
 
-  // Merkl reward claim is always on Base
-  const chainId = 8453;
+  const chainId = 8453; // Merkl reward claim is always on Base
   const targetChain = CHAIN_MAP[chainId];
 
-  if (walletClient.chain?.id !== chainId) {
-    const switched = await switchNetwork?.('base');
-    if (!switched?.success) {
-      throw new Error(switched?.error || 'Please switch wallet to Base');
-    }
-  }
+  await ensureWalletChain({
+    walletClient,
+    switchNetwork,
+    network: 'base',
+    chainId,
+    targetChain,
+    fallbackMessage: 'Please switch wallet to Base',
+  });
 
   const publicClient = getPublicClient(chainId);
   const yoClient = await getYoClient('base');
@@ -26,13 +27,17 @@ export async function executeClaimRewards({ network = 'base', userAddress, walle
   }
 
   const tx = yoClient.prepareClaimMerklRewards(userAddress, chainRewards);
-  const request = await buildTxRequest(publicClient, walletClient, targetChain, userAddress, tx);
-  const hash = await walletClient.sendTransaction(request);
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  const { hashes, lastResult: receipt } = await sendTransactions({
+    publicClient,
+    walletClient,
+    targetChain,
+    userAddress,
+    txs: [tx],
+  });
 
   return {
     success: true,
-    hash,
+    hash: hashes[0],
     receipt,
     chainId,
     network,

@@ -35,12 +35,14 @@ export async function executeWithdraw({ network = 'base', amount, userAddress, w
   const targetChain = CHAIN_MAP[chainId];
   if (!targetChain) throw new Error(`Unsupported network: ${network}`);
 
-  if (walletClient.chain?.id !== chainId) {
-    const switched = await switchNetwork?.(network);
-    if (!switched?.success) {
-      throw new Error(switched?.error || `Please switch wallet to ${network}`);
-    }
-  }
+  await ensureWalletChain({
+    walletClient,
+    switchNetwork,
+    network,
+    chainId,
+    targetChain,
+    fallbackMessage: `Please switch wallet to ${network}`,
+  });
 
   const publicClient = getPublicClient(chainId);
   const amountUnits = parseUnits(String(amount), 6);
@@ -83,21 +85,14 @@ export async function executeWithdraw({ network = 'base', amount, userAddress, w
     });
   }
 
-  const hashList = [];
-  let redeemReceipt = null;
-
-  for (let i = 0; i < txs.length; i++) {
-    const tx = txs[i];
-    const request = await buildTxRequest(publicClient, walletClient, targetChain, userAddress, tx);
-    const hash = await walletClient.sendTransaction(request);
-    hashList.push(hash);
-
-    if (i < txs.length - 1) {
-      await publicClient.waitForTransactionReceipt({ hash });
-    } else {
-      redeemReceipt = await waitForRedeemReceipt(publicClient, hash);
-    }
-  }
+  const { hashes: hashList, lastResult: redeemReceipt } = await sendTransactions({
+    publicClient,
+    walletClient,
+    targetChain,
+    userAddress,
+    txs,
+    waitForLastReceipt: (hash) => waitForRedeemReceipt(publicClient, hash),
+  });
 
   if (!redeemReceipt) {
     throw new Error('Withdraw transaction finished without redeem receipt');

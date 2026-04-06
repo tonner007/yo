@@ -40,6 +40,15 @@ export async function buildTxRequest(publicClient, walletClient, targetChain, us
   }
 }
 
+/**
+ * @param {object} params
+ * @param {any} params.publicClient
+ * @param {any} params.walletClient
+ * @param {any} params.targetChain
+ * @param {any} params.userAddress
+ * @param {any[]} params.txs
+ * @param {(hash: string) => Promise<any>} [params.waitForLastReceipt]
+ */
 export async function sendTransactions({ publicClient, walletClient, targetChain, userAddress, txs, waitForLastReceipt }) {
   const hashes = [];
   let lastResult = null;

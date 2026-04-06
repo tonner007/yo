@@ -20,12 +20,14 @@ export async function executeDeposit({ network = 'base', amount, userAddress, wa
   const targetChain = CHAIN_MAP[chainId];
   if (!targetChain) throw new Error(`Unsupported network: ${network}`);
 
-  if (walletClient.chain?.id !== chainId) {
-    const switched = await switchNetwork?.(network);
-    if (!switched?.success) {
-      throw new Error(switched?.error || `Please switch wallet to ${network}`);
-    }
-  }
+  await ensureWalletChain({
+    walletClient,
+    switchNetwork,
+    network,
+    chainId,
+    targetChain,
+    fallbackMessage: `Please switch wallet to ${network}`,
+  });
 
   const publicClient = getPublicClient(chainId);
   const amountUnits = parseUnits(String(amount), 6);
@@ -81,13 +83,8 @@ export async function executeDeposit({ network = 'base', amount, userAddress, wa
     });
   }
 
-  const hashList = [];
-
-  if (!allowanceSufficient && txs.length > 1) {
-    if (typeof walletClient.request !== 'function') {
-      throw new Error('Wallet nepodporuje batch transaction request pro Deposit.');
-    }
-
+  // If we need approval and have multiple txs, try wallet_sendCalls for batch Transaction request
+  if (!allowanceSufficient && txs.length > 1 && typeof walletClient.request === 'function') {
     try {
       const response = await walletClient.request({
         method: 'wallet_sendCalls',
@@ -111,45 +108,18 @@ export async function executeDeposit({ network = 'base', amount, userAddress, wa
         batchResponse: response,
       };
     } catch (batchError) {
-      throw new Error(batchError?.message || 'Wallet nepodporuje požadovaný Transaction request pro Deposit.');
+      // If user rejects batch request, fail immediately without fallback to Spending cap request
+      throw batchError;
     }
   }
 
-  for (const tx of txs) {
-    const baseRequest = {
-      account: walletClient.account,
-      to: tx.to,
-      data: tx.data,
-      value: tx.value ?? 0n,
-      chain: targetChain,
-    };
-
-    let request = baseRequest;
-
-    try {
-      const gas = await publicClient.estimateGas({
-        account: userAddress,
-        to: tx.to,
-        data: tx.data,
-        value: tx.value ?? 0n,
-      });
-
-      const fees = await publicClient.estimateFeesPerGas();
-
-      request = {
-        ...baseRequest,
-        gas: (gas * 120n) / 100n,
-        ...(fees.maxFeePerGas ? { maxFeePerGas: fees.maxFeePerGas } : {}),
-        ...(fees.maxPriorityFeePerGas ? { maxPriorityFeePerGas: fees.maxPriorityFeePerGas } : {}),
-        ...(fees.gasPrice ? { gasPrice: fees.gasPrice } : {}),
-      };
-    } catch {
-    }
-
-    const hash = await walletClient.sendTransaction(request);
-    hashList.push(hash);
-    await publicClient.waitForTransactionReceipt({ hash });
-  }
+  const { hashes: hashList } = await sendTransactions({
+    publicClient,
+    walletClient,
+    targetChain,
+    userAddress,
+    txs,
+  });
 
   return {
     success: true,

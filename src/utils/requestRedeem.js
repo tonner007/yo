@@ -19,12 +19,14 @@ export async function requestRedeem({ network = 'base', profitUsd, exchangeRateQ
   const targetChain = CHAIN_MAP[chainId];
   if (!targetChain) throw new Error(`Unsupported network: ${network}`);
 
-  if (walletClient.chain?.id !== chainId) {
-    const switched = await switchNetwork?.(network);
-    if (!switched?.success) {
-      throw new Error(switched?.error || `Please switch wallet to ${network}`);
-    }
-  }
+  await ensureWalletChain({
+    walletClient,
+    switchNetwork,
+    network,
+    chainId,
+    targetChain,
+    fallbackMessage: `Please switch wallet to ${network}`,
+  });
 
   const publicClient = getPublicClient(chainId);
 

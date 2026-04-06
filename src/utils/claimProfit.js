@@ -21,6 +21,7 @@ export async function executeClaimProfit({ network = 'base', profitUsd, exchange
     network,
     chainId,
     targetChain,
+    fallbackMessage: `Please switch wallet to ${network}`,
   });
 
   const publicClient = getPublicClient(chainId);
