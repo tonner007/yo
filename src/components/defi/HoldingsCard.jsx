@@ -5,6 +5,7 @@ export default function HoldingsCard({
   label, 
   value, 
   subtitle = null, 
+  subtitleIsHtml = false,
   showInfo = false, 
   highlight = false, 
   onSubtitleClick = undefined,
@@ -52,12 +53,20 @@ export default function HoldingsCard({
             {highlight && <span className="ml-2 text-xl">✨</span>}
           </div>
           {subtitle && (
-            <div 
-              onClick={onSubtitleClick}
-              className={`text-xs text-primary mt-auto font-medium ${onSubtitleClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
-            >
-              {subtitle}
-            </div>
+            subtitleIsHtml ? (
+              <div 
+                onClick={onSubtitleClick}
+                className={`text-xs mt-auto font-medium ${onSubtitleClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                dangerouslySetInnerHTML={{ __html: subtitle }}
+              />
+            ) : (
+              <div 
+                onClick={onSubtitleClick}
+                className={`text-xs mt-auto font-medium ${onSubtitleClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+              >
+                {subtitle}
+              </div>
+            )
           )}
         </div>
       </div>

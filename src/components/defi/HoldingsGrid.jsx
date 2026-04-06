@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState, useEffect } from "react";
 import HoldingsCard from "./HoldingsCard";
 import { useWallet } from "../../contexts/WalletContext";
 import { useSevenDayApy } from "../../hooks/useSevenDayApy";
@@ -43,6 +43,8 @@ export default function HoldingsGrid() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [defaultModalTab, setDefaultModalTab] = useState("deposit");
   const [isClaimingProfit, setIsClaimingProfit] = useState(false);
+  const [estimatedFeePercent, setEstimatedFeePercent] = useState(0);
+  const [showDebugValues, setShowDebugValues] = useState(false);
   const { network, userAddress, walletClient, switchNetwork } = useWallet();
   const { apyRaw } = useSevenDayApy(network);
   const {
@@ -104,6 +106,20 @@ export default function HoldingsGrid() {
     }
   };
 
+  // Fetch estimated fee percent from debug values
+  useEffect(() => {
+    if (userAddress && network) {
+      getWithdrawDebugValuesForNetwork(network, userAddress)
+        .then(values => {
+          // Try estimatedFeePercent first (maybe 2.95%), fallback to estimatedFeePercentVsMax
+          const formatted = values.estimatedFeePercentFormatted || values.estimatedFeePercentVsMaxFormatted || '0.000000%';
+          const percent = parseFloat(formatted.replace('%', ''));
+          setEstimatedFeePercent(percent);
+        })
+        .catch(console.error);
+    }
+  }, [userAddress, network]);
+
   const handleRequestRedeem = async () => {
     if (!userAddress || !walletClient || isClaimingProfit || !profitRaw || profitRaw <= 0) {
       return;
@@ -163,7 +179,8 @@ export default function HoldingsGrid() {
       label: "Total Balance", 
       value: totalBalance,
       isLoading: isTotalBalanceLoading,
-      subtitle: "Withdraw",
+      subtitle: `<span class="text-primary">Withdraw</span> <span class="text-muted-foreground">(fee ${(estimatedFeePercent || 0).toFixed(2)}%)</span>`,
+      subtitleIsHtml: true,
       onSubtitleClick: () => {
         setDefaultModalTab("withdraw");
         setIsDepositModalOpen(true);
@@ -175,7 +192,8 @@ export default function HoldingsGrid() {
       isLoading: isProfitLoading,
       showInfo: true,
       tooltip: "Current profit or loss versus your net deposits",
-      subtitle: profitRaw > 0 ? "Claim profit" : null,
+      subtitle: `<span class="text-primary">Claim profit</span> <span class="text-muted-foreground">(fee ${(estimatedFeePercent || 0).toFixed(2)}%)</span>`,
+      subtitleIsHtml: true,
       onSubtitleClick: profitRaw > 0 ? handleRequestRedeem : undefined
     },
     { 
@@ -190,7 +208,8 @@ export default function HoldingsGrid() {
       isLoading: isClaimableRewardsLoading,
       showInfo: true,
       tooltip: "Additional rewards available to claim separately from vault balance",
-      subtitle: "Claim rewards",
+      subtitle: `<span class=\"text-primary\">Claim rewards</span>`,
+      subtitleIsHtml: true,
       onSubtitleClick: canClaim ? async () => {
         alert('Claim flow is not yet wired to an onchain transaction. Rewards value was refreshed from YO API.');
         refreshClaimableRewards();
@@ -209,8 +228,20 @@ export default function HoldingsGrid() {
             <HoldingsCard key={item.label} {...item} />
           ))}
         </div>
+        {/* Debug values toggle */}
+        <div className="flex justify-start mt-6 px-6">
+          <button
+            onClick={() => setShowDebugValues(!showDebugValues)}
+            className="text-lg hover:opacity-80 transition-opacity"
+            title={showDebugValues ? "Skrýt debug values" : "Zobrazit debug values"}
+          >
+            {showDebugValues ? "💔" : "❤️"}
+          </button>
+        </div>
       </div>
-      <WithdrawDebugValues userAddress={userAddress} network={network} />
+      {showDebugValues && (
+        <WithdrawDebugValues userAddress={userAddress} network={network} />
+      )}
       {isDepositModalOpen && (
         <Suspense fallback={null}>
           <DepositModal 

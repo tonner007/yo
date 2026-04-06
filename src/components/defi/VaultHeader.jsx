@@ -64,7 +64,8 @@ export default function VaultHeader() {
             <HoldingsCard 
               label="Available to Deposit" 
               value={isLoading ? "Loading..." : availableToDeposit}
-              subtitle="Deposit"
+              subtitle={'<span class="text-primary">Deposit</span>'}
+              subtitleIsHtml={true}
               onSubtitleClick={handleDepositClick}
               isLoading={isLoading}
               tooltip={isConnected ? 
