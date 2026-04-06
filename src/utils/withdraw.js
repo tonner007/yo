@@ -1,65 +1,8 @@
-import { createPublicClient, fallback, http, parseUnits } from 'viem';
-import { mainnet, base, arbitrum } from 'viem/chains';
-import { maxRedeem, prepareRedeem, prepareRedeemWithApproval, quotePreviewWithdraw, waitForRedeemReceipt } from '@yo-protocol/core';
+import { parseUnits } from 'viem';
+import { maxRedeem, prepareRedeem, prepareRedeemWithApproval, quotePreviewWithdraw, waitForRedeemReceipt, YO_GATEWAY_ADDRESS } from '@yo-protocol/core';
 import { getSupportedChainId, YOUSD_VAULT_ADDRESS } from '../lib/yo';
-
-const CHAIN_MAP = {
-  1: mainnet,
-  8453: base,
-  42161: arbitrum,
-};
-
-function getTransport(chainId) {
-  if (chainId === 8453) {
-    return fallback([
-      http('https://base.publicnode.com'),
-      http('https://base-rpc.publicnode.com'),
-      http('https://base.gateway.tenderly.co'),
-      http('https://1rpc.io/base'),
-      http('https://mainnet.base.org'),
-    ]);
-  }
-
-  return http();
-}
-
-function getPublicClient(chainId) {
-  return createPublicClient({
-    chain: CHAIN_MAP[chainId] ?? mainnet,
-    transport: getTransport(chainId),
-  });
-}
-
-async function buildTxRequest(publicClient, walletClient, targetChain, userAddress, tx) {
-  const baseRequest = {
-    account: walletClient.account,
-    to: tx.to,
-    data: tx.data,
-    value: tx.value ?? 0n,
-    chain: targetChain,
-  };
-
-  try {
-    const gas = await publicClient.estimateGas({
-      account: userAddress,
-      to: tx.to,
-      data: tx.data,
-      value: tx.value ?? 0n,
-    });
-
-    const fees = await publicClient.estimateFeesPerGas();
-
-    return {
-      ...baseRequest,
-      gas: (gas * 120n) / 100n,
-      ...(fees.maxFeePerGas ? { maxFeePerGas: fees.maxFeePerGas } : {}),
-      ...(fees.maxPriorityFeePerGas ? { maxPriorityFeePerGas: fees.maxPriorityFeePerGas } : {}),
-      ...(fees.gasPrice ? { gasPrice: fees.gasPrice } : {}),
-    };
-  } catch {
-    return baseRequest;
-  }
-}
+import { CHAIN_MAP, getPublicClient } from './web3';
+import { ensureWalletChain, sendTransactions } from './tx';
 
 async function checkAllowance(publicClient, vaultAddress, gatewayAddress, userAddress, neededShares) {
   try {

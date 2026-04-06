@@ -1,14 +1,9 @@
 // @ts-nocheck
-import { createPublicClient, fallback, http, parseUnits } from 'viem';
-import { mainnet, base, arbitrum } from 'viem/chains';
+import { parseUnits } from 'viem';
 import { prepareDeposit, prepareDepositWithApproval, YO_GATEWAY_ADDRESS } from '@yo-protocol/core';
 import { getSupportedChainId, YOUSD_VAULT_ADDRESS } from '../lib/yo';
-
-const CHAIN_MAP = {
-  1: mainnet,
-  8453: base,
-  42161: arbitrum,
-};
+import { CHAIN_MAP, getPublicClient } from './web3';
+import { ensureWalletChain, sendTransactions, buildTxRequest } from './tx';
 
 const USDC_BY_CHAIN_ID = {
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
@@ -16,26 +11,6 @@ const USDC_BY_CHAIN_ID = {
   42161: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
 };
 
-function getTransport(chainId) {
-  if (chainId === 8453) {
-    return fallback([
-      http('https://base.publicnode.com'),
-      http('https://base-rpc.publicnode.com'),
-      http('https://base.gateway.tenderly.co'),
-      http('https://1rpc.io/base'),
-      http('https://mainnet.base.org'),
-    ]);
-  }
-
-  return http();
-}
-
-function getPublicClient(chainId) {
-  return createPublicClient({
-    chain: CHAIN_MAP[chainId] ?? mainnet,
-    transport: getTransport(chainId),
-  });
-}
 
 export async function executeDeposit({ network = 'base', amount, userAddress, walletClient, switchNetwork }) {
   if (!userAddress) throw new Error('Wallet not connected');

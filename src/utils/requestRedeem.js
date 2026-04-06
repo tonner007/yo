@@ -1,35 +1,11 @@
-import { createPublicClient, fallback, http, parseUnits } from 'viem';
-import { mainnet, base, arbitrum } from 'viem/chains';
+import { parseUnits } from 'viem';
 import { getSupportedChainId, YOUSD_VAULT_ADDRESS } from '../lib/yo';
-
-const CHAIN_MAP = {
-  1: mainnet,
-  8453: base,
-  42161: arbitrum,
-};
+import { CHAIN_MAP, getPublicClient } from './web3';
+import { ensureWalletChain } from './tx';
 
 // Use YOUSD vault contract directly (same as original YO app)
 const VAULT_ADDRESS = '0x0000000f2eb9f69274678c76222b35eec7588a65';
 
-function getTransport(chainId) {
-  if (chainId === 8453) {
-    return fallback([
-      http('https://base.publicnode.com'),
-      http('https://base-rpc.publicnode.com'),
-      http('https://base.gateway.tenderly.co'),
-      http('https://1rpc.io/base'),
-      http('https://mainnet.base.org'),
-    ]);
-  }
-  return http();
-}
-
-function getPublicClient(chainId) {
-  return createPublicClient({
-    chain: CHAIN_MAP[chainId] ?? mainnet,
-    transport: getTransport(chainId),
-  });
-}
 
 /**
  * requestRedeem - Mimics the original YO app's redeem flow
