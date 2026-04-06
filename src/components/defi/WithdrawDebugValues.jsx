@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getWithdrawDebugValuesForNetwork } from '../../utils/getWithdrawDebugValues';
 
-export const SHOW_DEBUG_WITHDRAW_VALUES = true;
+export const SHOW_DEBUG_WITHDRAW_VALUES = false;
 
 export default function WithdrawDebugValues({ userAddress, network }) {
   const [values, setValues] = useState({

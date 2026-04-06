@@ -1,33 +1,10 @@
-import { createYoClient } from '@yo-protocol/core';
-
 /**
- * Získá celkové TVL (Total Value Locked) pro YO Protocol pomocí YO SDK
+ * Získá celkové TVL (Total Value Locked) pro YO Protocol
  * @returns {Promise<{value: number, formatted: string}>}
  */
 export async function getTotalTvl() {
   try {
-    // 1. Pokus o získání TVL přes YO SDK (primární metoda)
-    try {
-      const ethClient = createYoClient({ chainId: 1 });
-      const vaultAddress = '0x0000000f2eb9f69274678c76222b35eec7588a65';
-      
-      // Získání snapshotu vaultu přes SDK
-      const snapshot = await ethClient.getVaultSnapshot(vaultAddress);
-      
-      if (snapshot && snapshot.tvl) {
-        const tvlInWei = BigInt(snapshot.tvl);
-        const tvlInEth = Number(tvlInWei) / 1e18;
-        
-        // Pro získání ceny ETH bychom použili oracle, pro demo fixní cena
-        const ethPrice = 2000;
-        const tvlValue = tvlInEth * ethPrice;
-        
-        return formatTvlResult(tvlValue);
-      }
-    } catch {
-    }
-    
-    // 2. Fallback na YO REST API
+    // YO REST API
     const API_URL = 'https://api.yo.xyz/api/v1/vault/tvl/timeseries/ethereum/0x0000000f2eb9f69274678c76222b35eec7588a65';
     
     const response = await fetch(API_URL, {
@@ -54,8 +31,7 @@ export async function getTotalTvl() {
     // Pouze jako poslední fallback - v produkci bychom toto nepoužili
     return {
       value: 40120000,
-      formatted: '$40.12M',
-      source: 'fallback'
+      formatted: '$40.12M'
     };
   }
 }
@@ -63,7 +39,7 @@ export async function getTotalTvl() {
 /**
  * Formátuje TVL hodnotu
  * @param {number} tvlValue - TVL v USD
- * @returns {{value: number, formatted: string, source: string}}
+ * @returns {{value: number, formatted: string}}
  */
 function formatTvlResult(tvlValue) {
   let formatted;
@@ -80,7 +56,6 @@ function formatTvlResult(tvlValue) {
   return {
     value: tvlValue,
     formatted,
-    source: 'yo-services'
   };
 }
 
@@ -165,7 +140,6 @@ export async function getMultiChainTvl() {
       total: totalTvl,
       formatted: formatTvlValue(totalTvl),
       breakdown,
-      source: 'yo-api'
     };
     
   } catch {
@@ -177,7 +151,6 @@ export async function getMultiChainTvl() {
       breakdown: [
         { chain: 'Ethereum', value: 40120000, formatted: '$40.12M', success: true }
       ],
-      source: 'fallback'
     };
   }
 }
