@@ -8,6 +8,7 @@ import { useClaimableRewards } from "../../hooks/useClaimableRewards";
 import WithdrawDebugValues from "./WithdrawDebugValues";
 import { getWithdrawDebugValuesForNetwork } from "../../utils/getWithdrawDebugValues";
 import { requestRedeem } from "../../utils/requestRedeem";
+import { executeClaimRewards } from "../../utils/claimRewards";
 
 const DepositModal = lazy(() => import("./DepositModal"));
 function isUserRejectedError(error) {
@@ -162,6 +163,38 @@ export default function HoldingsGrid() {
     }
   };
 
+  const handleClaimRewards = async () => {
+    if (!userAddress || !walletClient || isClaimingProfit || !canClaim) {
+      return;
+    }
+
+    try {
+      setIsClaimingProfit(true);
+
+      await executeClaimRewards({
+        network,
+        userAddress,
+        walletClient,
+        switchNetwork,
+      });
+
+      refreshClaimableRewards();
+      refreshTotalBalance();
+      refreshProfit();
+    } catch (error) {
+      if (!isUserRejectedError(error)) {
+        console.error('Claim rewards failed:', error);
+        if (isRateLimitError(error)) {
+          alert('Base RPC je dočasně přetížené (429). Zkus Claim rewards za pár sekund znovu.');
+        } else {
+          alert(error?.message || error?.shortMessage || 'Claim rewards failed. Please try again.');
+        }
+      }
+    } finally {
+      setIsClaimingProfit(false);
+    }
+  };
+
   const projectedYearlyEarnings = useMemo(() => {
     const total = Number(totalBalanceRaw || 0);
     const apy = Number(apyRaw || 0);
@@ -210,12 +243,7 @@ export default function HoldingsGrid() {
       tooltip: "Additional rewards available to claim separately from vault balance",
       subtitle: `<span class=\"text-primary\">Claim rewards</span>`,
       subtitleIsHtml: true,
-      onSubtitleClick: canClaim ? async () => {
-        alert('Claim flow is not yet wired to an onchain transaction. Rewards value was refreshed from YO API.');
-        refreshClaimableRewards();
-        refreshTotalBalance();
-        refreshProfit();
-      } : () => {}
+      onSubtitleClick: canClaim ? handleClaimRewards : undefined
     },
   ];
 
@@ -229,7 +257,7 @@ export default function HoldingsGrid() {
           ))}
         </div>
         {/* Debug values toggle */}
-        <div className="flex justify-start mt-6 px-6">
+        <div className="flex justify-start mt-6">
           <button
             onClick={() => setShowDebugValues(!showDebugValues)}
             className="text-lg hover:opacity-80 transition-opacity"
