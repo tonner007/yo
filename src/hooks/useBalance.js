@@ -180,6 +180,7 @@ export function useBalance(userAddress, network = 'ethereum') {
     
     // For compatibility with old code
     availableToDeposit: state.formatted,
+    availableToDepositRaw: state.value,
     refreshBalance: fetchBalance,
   };
 }

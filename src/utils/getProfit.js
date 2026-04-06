@@ -96,7 +96,7 @@ export async function getProfit(network, account) {
       const unrealized = Number(performance.unrealized.formatted ?? 0);
       const realized = Number(performance.realized.formatted ?? 0);
       const totalProfit = unrealized + realized;
-      const abs = Math.abs(totalProfit).toFixed(4);
+      const abs = Math.abs(totalProfit).toFixed(2);
       const formatted = totalProfit < 0 ? `-$${abs}` : `$${abs}`;
       
       return {
@@ -122,7 +122,7 @@ export async function getProfit(network, account) {
     const totalBalanceUSD = Number(balance.raw ?? 0);
     const netDepositsUSD = Number(net.netDeposits ?? 0);
     const profitRaw = totalBalanceUSD - netDepositsUSD;
-    const abs = Math.abs(profitRaw).toFixed(4);
+    const abs = Math.abs(profitRaw).toFixed(2);
     const formatted = profitRaw < 0 ? `-$${abs}` : `$${abs}`;
 
     return {
@@ -141,7 +141,7 @@ export async function getProfit(network, account) {
       totalBalance: 0,
       netDeposits: 0,
       profitRaw: 0,
-      profitFormatted: '$0.0000',
+      profitFormatted: '$0.00',
       deposits: 0,
       withdrawals: 0,
       history: [],

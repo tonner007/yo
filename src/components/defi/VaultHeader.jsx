@@ -16,6 +16,7 @@ export default function VaultHeader() {
   // USDC balance - using ultra-simple hook
   const { 
     availableToDeposit,
+    availableToDepositRaw,
     isLoading,
     refreshBalance
   } = useBalance(userAddress, network);
@@ -95,6 +96,7 @@ export default function VaultHeader() {
             isOpen={isDepositModalOpen} 
             onClose={() => setIsDepositModalOpen(false)}
             defaultTab={defaultModalTab}
+            presetAmount={defaultModalTab === "deposit" && availableToDepositRaw > 0 ? (Math.floor(availableToDepositRaw * 10000) / 10000).toFixed(4) : null}
             onTransactionComplete={handleAfterTransaction}
           />
         </Suspense>

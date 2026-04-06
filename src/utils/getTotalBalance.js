@@ -144,7 +144,7 @@ export async function getTotalBalance(chainId, vaultAddress, account) {
       const result = {
         shares,
         assets,
-        formatted: `$${finalValueUSD.toFixed(4)}`,
+        formatted: `$${finalValueUSD.toFixed(2)}`,
         raw: finalValueUSD,
         source: 'maxWithdraw',
         redeemValue: redeemValueUSD,

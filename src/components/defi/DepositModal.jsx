@@ -3,6 +3,18 @@ import { ChevronDown, Check, X } from "lucide-react";
 import { useWallet } from "../../contexts/WalletContext";
 import { executeDeposit } from "../../utils/deposit";
 import { requestRedeem } from "../../utils/requestRedeem";
+import { getWithdrawExchangeRate } from "../../utils/getWithdrawExchangeRate";
+
+function floorToDecimals(value, decimals = 4) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return 0;
+  const factor = 10 ** decimals;
+  return Math.floor(num * factor) / factor;
+}
+
+function formatFloorToDecimals(value, decimals = 4) {
+  return floorToDecimals(value, decimals).toFixed(decimals);
+}
 
 const USDC_ADDRESSES = {
   base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
@@ -109,15 +121,24 @@ function isUserRejectedError(error) {
 
 export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", presetAmount = null, skipApproval = false, onTransactionComplete }) {
   const { userAddress, walletClient, switchNetwork } = useWallet();
+  const depositPresetAmount = defaultTab === 'deposit' && presetAmount ? formatFloorToDecimals(presetAmount, 4) : null;
+  const withdrawPresetAmount = defaultTab === 'withdraw' && presetAmount ? formatFloorToDecimals(presetAmount, 4) : null;
   
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [selectedNetwork, setSelectedNetwork] = useState("base");
-  const [depositAmount, setDepositAmount] = useState(presetAmount || "");
+  const [depositAmount, setDepositAmount] = useState(
+    defaultTab === 'deposit' ? (depositPresetAmount || "") : (withdrawPresetAmount || "")
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [maxWithdrawable, setMaxWithdrawable] = useState(() => {
-    // Default to preset amount if available (for withdraw tab)
-    if (defaultTab === 'withdraw' && presetAmount) {
-      return Number(presetAmount);
+    if (withdrawPresetAmount) {
+      return floorToDecimals(withdrawPresetAmount, 4);
+    }
+    return 0;
+  });
+  const [maxDepositAvailable, setMaxDepositAvailable] = useState(() => {
+    if (depositPresetAmount) {
+      return floorToDecimals(depositPresetAmount, 4);
     }
     return 0;
   });
@@ -126,42 +147,93 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
   // Reset amount and update tab when modal opens
   useEffect(() => {
     if (isOpen) {
-      if (!presetAmount) {
-        setDepositAmount("");
-      }
       setActiveTab(defaultTab);
+
+      if (defaultTab === 'deposit') {
+        setDepositAmount(depositPresetAmount || "");
+        return;
+      }
+
+      if (defaultTab === 'withdraw') {
+        setDepositAmount(withdrawPresetAmount || "");
+        return;
+      }
+
+      setDepositAmount("");
     }
-  }, [isOpen, defaultTab, presetAmount]);
+  }, [isOpen, defaultTab, depositPresetAmount, withdrawPresetAmount]);
 
   const amount = parseFloat(depositAmount);
   const isValid = !isNaN(amount) && amount > 0;
 
-  // Fetch maxWithdrawable when modal opens for withdraw tab
+  // Fetch Total Balance limit when modal opens for withdraw tab
   useEffect(() => {
     if (isOpen && activeTab === 'withdraw' && userAddress) {
-      const fetchMaxWithdrawable = async () => {
+      if (withdrawPresetAmount) {
+        setMaxWithdrawable(floorToDecimals(withdrawPresetAmount, 4));
+      }
+
+      const fetchWithdrawLimit = async () => {
         try {
-          const { getWithdrawDebugValuesForNetwork } = await import("../../utils/getWithdrawDebugValues");
-          const debugValues = await getWithdrawDebugValuesForNetwork(selectedNetwork, userAddress);
-          setMaxWithdrawable(Number(debugValues.maxWithdrawableDebugFormatted?.replace(/[^0-9.]/g, '') || 0));
+          const { getTotalBalanceForNetwork } = await import("../../utils/getTotalBalance");
+          const totalBalance = await getTotalBalanceForNetwork(selectedNetwork, userAddress);
+          setMaxWithdrawable(floorToDecimals(totalBalance.raw ?? 0, 4));
         } catch (error) {
-          console.error('Failed to fetch maxWithdrawable:', error);
+          console.error('Failed to fetch withdraw limit from Total Balance:', error);
         }
       };
-      fetchMaxWithdrawable();
+      fetchWithdrawLimit();
     }
-  }, [isOpen, activeTab, userAddress, selectedNetwork]);
+  }, [isOpen, activeTab, userAddress, selectedNetwork, withdrawPresetAmount]);
 
-  // Validate amount against maxWithdrawable
+  // Fetch Available to Deposit limit when modal opens for deposit tab
   useEffect(() => {
-    if (activeTab === 'withdraw' && depositAmount) {
-      const amountNum = Number(depositAmount);
-      const isValidAmount = amountNum > 0 && amountNum <= maxWithdrawable;
-      setIsAmountValid(isValidAmount);
-    } else {
-      setIsAmountValid(true);
+    if (isOpen && activeTab === 'deposit' && userAddress) {
+      if (depositPresetAmount) {
+        setMaxDepositAvailable(floorToDecimals(depositPresetAmount, 4));
+      }
+
+      const fetchDepositLimit = async () => {
+        try {
+          const { getUsdcBalance } = await import("../../utils/getUsdcBalance");
+          const available = await getUsdcBalance(userAddress, selectedNetwork);
+          const flooredAvailable = floorToDecimals(available.balance ?? 0, 4);
+          setMaxDepositAvailable(flooredAvailable);
+
+          if (defaultTab === 'deposit' && presetAmount) {
+            setDepositAmount(formatFloorToDecimals(presetAmount, 4));
+          }
+        } catch (error) {
+          console.error('Failed to fetch deposit limit from Available to Deposit:', error);
+        }
+      };
+      fetchDepositLimit();
     }
-  }, [depositAmount, maxWithdrawable, activeTab]);
+  }, [isOpen, activeTab, userAddress, selectedNetwork, defaultTab, presetAmount, depositPresetAmount]);
+
+  // Validate amount against current tab limit rounded down to 4 decimals
+  useEffect(() => {
+    if (!depositAmount) {
+      setIsAmountValid(true);
+      return;
+    }
+
+    const amountNum = Number(depositAmount);
+
+    if (activeTab === 'withdraw') {
+      const maxAllowed = floorToDecimals(withdrawPresetAmount ?? maxWithdrawable, 4);
+      setIsAmountValid(amountNum > 0 && amountNum <= maxAllowed);
+      return;
+    }
+
+    if (activeTab === 'deposit') {
+      const maxAllowed = floorToDecimals(depositPresetAmount ?? maxDepositAvailable, 4);
+      setIsAmountValid(amountNum > 0 && amountNum <= maxAllowed);
+      return;
+    }
+
+    setIsAmountValid(true);
+  }, [depositAmount, maxWithdrawable, maxDepositAvailable, activeTab, depositPresetAmount, withdrawPresetAmount]);
 
   const handleDeposit = async () => {
     if (!isValid || isSubmitting) return;
@@ -211,19 +283,12 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
     try {
       setIsSubmitting(true);
 
-      // Get exchange rate from debug values (use maxWithdraw / shares)
-      const { getWithdrawDebugValuesForNetwork } = await import("../../utils/getWithdrawDebugValues");
-      const debugValues = await getWithdrawDebugValuesForNetwork(selectedNetwork, userAddress);
-      const exchangeRateMax = Number(debugValues.exchangeRateMaxRaw ?? 0);
-
-      if (!exchangeRateMax || exchangeRateMax <= 0) {
-        throw new Error('Exchange rate unavailable');
-      }
+      const exchangeRateQuote = await getWithdrawExchangeRate(selectedNetwork, userAddress);
 
       const result = await requestRedeem({
         network: selectedNetwork,
-        profitUsd: amount, // User entered amount
-        exchangeRateQuote: exchangeRateMax, // Use maxWithdraw rate
+        profitUsd: amount,
+        exchangeRateQuote,
         userAddress,
         walletClient,
         switchNetwork,
@@ -243,7 +308,11 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
     } catch (error) {
       if (!isUserRejectedError(error)) {
         console.error("Withdraw failed:", error);
-        alert(error?.message || "Withdraw failed. Please try again.");
+        if (String(error?.message || '').includes('429') || String(error?.details || '').includes('429') || String(error?.message || '').toLowerCase().includes('rate limit')) {
+          alert('Base RPC je dočasně přetížené (429). Zkus Withdraw za pár sekund znovu.');
+        } else {
+          alert(error?.message || "Withdraw failed. Please try again.");
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -273,7 +342,14 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
           {["deposit", "withdraw"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => {
+              setActiveTab(tab);
+              if (tab === 'deposit') {
+                setDepositAmount(depositPresetAmount || '');
+              } else if (tab === 'withdraw') {
+                setDepositAmount(withdrawPresetAmount || '');
+              }
+            }}
               className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-colors relative ${
                 activeTab === tab ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
@@ -315,7 +391,7 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                   placeholder="0"
-                  className={`bg-transparent text-right text-xl font-bold w-full outline-none placeholder:text-muted-foreground ${activeTab === 'withdraw' && !isAmountValid ? 'text-red-500' : 'text-foreground'}`}
+                  className={`bg-transparent text-right text-xl font-bold w-full outline-none placeholder:text-muted-foreground ${!isAmountValid ? 'text-red-500' : 'text-foreground'}`}
                 />
                 <div className="text-muted-foreground text-xs text-right">
                   ${isValid ? (amount).toFixed(2) : "0.00"}
@@ -327,9 +403,9 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
           {/* Action button */}
           <button
             onClick={activeTab === "deposit" ? handleDeposit : handleWithdraw}
-            disabled={!isValid || !userAddress || isSubmitting || (activeTab === 'withdraw' && !isAmountValid)}
+            disabled={!isValid || !userAddress || isSubmitting || !isAmountValid}
             className={`w-full py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all ${
-              isValid && userAddress && !isSubmitting && (activeTab !== 'withdraw' || isAmountValid)
+              isValid && userAddress && !isSubmitting && isAmountValid
                 ? "bg-primary text-primary-foreground hover:opacity-90"
                 : "bg-secondary text-muted-foreground cursor-not-allowed opacity-50"
             }`}

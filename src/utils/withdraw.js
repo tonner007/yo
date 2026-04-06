@@ -12,9 +12,11 @@ const CHAIN_MAP = {
 function getTransport(chainId) {
   if (chainId === 8453) {
     return fallback([
-      http('https://mainnet.base.org'),
       http('https://base.publicnode.com'),
+      http('https://base-rpc.publicnode.com'),
       http('https://base.gateway.tenderly.co'),
+      http('https://1rpc.io/base'),
+      http('https://mainnet.base.org'),
     ]);
   }
 
