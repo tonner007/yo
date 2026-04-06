@@ -1,97 +1,84 @@
-# YO App - DeFi Dashboard
+# YO App
 
-Moderní React aplikace pro DeFi dashboard s wallet integration.
+Frontend pro YO vault dashboard nasazený jako statický Vite build.
 
-## 🚀 Rychlý start
+## Stack
 
-1. **Instalace závislostí:**
-   ```bash
-   npm install
-   ```
+- React 18
+- Vite 6
+- Tailwind CSS
+- Radix UI
+- RainbowKit + wagmi + viem
+- @tanstack/react-query
+- @yo-protocol/core
 
-2. **Spuštění vývojového serveru:**
-   ```bash
-   npm run dev
-   ```
+## Co appka dělá
 
-3. **Otevřít v prohlížeči:**
-   - Aplikace běží na [http://localhost:5173](http://localhost:5173)
+- zobrazuje Total Balance
+- zobrazuje Profit & Loss
+- zobrazuje Claimable Rewards
+- umožňuje Deposit / Withdraw
+- umožňuje Claim profit a Claim rewards
+- používá wallet flow přes RainbowKit
 
-## 📁 Projektová struktura
-
-```
-yo-app/
-├── src/
-│   ├── api/              # API klienti a služby
-│   ├── components/       # React komponenty
-│   │   ├── defi/        # DeFi specifické komponenty
-│   │   └── ui/          # UI komponenty (Radix UI)
-│   ├── lib/             # Utility funkce a kontexty
-│   ├── pages/           # Stránky aplikace
-│   └── main.jsx         # Vstupní bod aplikace
-├── public/              # Statické soubory
-└── index.html           # Hlavní HTML soubor
-```
-
-## 🛠️ Technologie
-
-- **React 18** - UI knihovna
-- **Vite** - Build tool a dev server
-- **TypeScript** - Typový systém
-- **Tailwind CSS** - Utility-first CSS framework
-- **Radix UI** - Přístupné UI komponenty
-- **React Router** - Client-side routing
-- **React Query** - Data fetching a caching
-
-## 🔧 Konfigurace
-
-Vytvořte `.env.local` soubor pro environment proměnné:
-
-```env
-# Základní konfigurace
-VITE_APP_ID=yo-app
-VITE_API_BASE_URL=http://localhost:3001
-
-# Feature flags
-VITE_USE_MOCK_AUTH=true
-VITE_ENABLE_WALLET_CONNECT=false
-```
-
-## 🚀 Build pro produkci
+## Lokální vývoj
 
 ```bash
-# Build aplikace
-npm run build
-
-# Preview build
-npm run preview
+npm install
+npm run dev
 ```
 
-## 📦 Nasazení
+Dev server běží standardně na:
+- `http://localhost:5173`
 
-Aplikaci lze nasadit na:
-- **Vercel** - `vercel deploy`
-- **Netlify** - `netlify deploy`
-- **GitHub Pages** - `npm run build && gh-pages -d dist`
-- **Jakýkoliv statický hosting**
+## Kontrola kvality
 
-## 🎯 Funkce
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
 
-- ✅ DeFi dashboard s TVL displayem
-- ✅ Wallet connection button
-- ✅ Mock autentizace
-- ✅ Responsive design
-- ✅ Moderní UI s Tailwind CSS
-- ✅ Přístupné komponenty (Radix UI)
+## Produkční build
 
-## 🔄 Plánované funkce
+```bash
+npm run build
+```
 
-- [ ] Integrace ConnectKit/Wagmi
-- [ ] Reálná wallet connection
-- [ ] USDC balance display
-- [ ] Multi-chain support
-- [ ] Reálná API integrace
+Build output:
+- `dist/`
 
-## 📄 Licence
+Na tomto serveru se build kopíruje do:
+- `/var/www/tonner`
 
-MIT
+A servíruje přes nginx pro:
+- `tonner.my.id`
+- `dev.tonner.my.id`
+
+## Environment proměnné
+
+Používané proměnné:
+
+```env
+VITE_APP_ID=yo-app
+VITE_API_BASE_URL=http://localhost:3001
+VITE_USE_MOCK_AUTH=false
+VITE_ENABLE_WALLET_CONNECT=true
+```
+
+Poznámky:
+- wallet flow dnes běží přes RainbowKit/wagmi
+- některé legacy app params zůstávají kvůli kompatibilitě v `src/lib/app-params.js`
+- `NODE_ENV` ani `VITE_PORT` není potřeba držet v `.env.local`
+
+## Poznámka ke kódu
+
+Projekt byl iterativně upravovaný, takže část struktury ještě nese historické vrstvy. Aktuálně je ale:
+- lint OK
+- typecheck OK
+- build OK
+
+Další doporučené kroky:
+- sjednotit transaction flow
+- pročistit dependencies
+- zrevidovat `app-params` legacy vrstvu
