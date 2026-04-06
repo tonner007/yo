@@ -81,7 +81,6 @@ export async function getNetDeposits(network, account) {
     const history = await getUserHistoryForNetwork(network, account);
     return { ...sumNetDeposits(history), history };
   } catch (error) {
-    console.error('Failed to fetch net deposits:', error);
     return { deposits: 0, withdrawals: 0, netDeposits: 0, history: [], error };
   }
 }
@@ -136,7 +135,6 @@ export async function getProfit(network, account) {
       source: 'calculated',
     };
   } catch (error) {
-    console.error('Failed to compute profit:', error);
     return {
       totalBalance: 0,
       netDeposits: 0,

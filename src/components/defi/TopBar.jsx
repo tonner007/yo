@@ -16,8 +16,7 @@ export default function TopBar() {
         // Načtení skutečného TVL přes YO SDK
         const result = await getTotalTvl();
         setTvl(result.formatted);
-      } catch (error) {
-        console.error("Failed to load TVL:", error);
+      } catch {
         setTvl(DEFAULT_TVL);
       } finally {
         setIsLoading(false);

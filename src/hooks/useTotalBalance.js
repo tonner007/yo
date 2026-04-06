@@ -46,8 +46,7 @@ export function useTotalBalance(userAddress, network = 'ethereum', refreshKey = 
       
       setTotalBalance(result.formatted ?? '$0.00');
       setTotalBalanceRaw(Number(result.raw ?? 0));
-    } catch (error) {
-      console.error('[useTotalBalance] Error:', error);
+    } catch {
       // Keep previous value on error
     } finally {
       setIsLoading(false);

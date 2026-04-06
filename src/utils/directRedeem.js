@@ -52,8 +52,7 @@ async function buildTxRequest(publicClient, walletClient, targetChain, userAddre
       ...(fees.maxPriorityFeePerGas ? { maxPriorityFeePerGas: fees.maxPriorityFeePerGas } : {}),
       ...(fees.gasPrice ? { gasPrice: fees.gasPrice } : {}),
     };
-  } catch (estimateError) {
-    console.warn('[directRedeem] Fee estimation failed, using base request:', estimateError);
+  } catch {
     return baseRequest;
   }
 }

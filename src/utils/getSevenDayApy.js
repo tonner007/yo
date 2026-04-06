@@ -21,14 +21,12 @@ export async function getSevenDayApy(chainIdOrNetwork, vaultAddress = YOUSD_VAUL
       percentage: `${apy.toFixed(2)}%`,
       source: snapshot,
     };
-  } catch (error) {
-    console.error('Failed to fetch 7D APY from YO SDK:', error);
+  } catch {
     return {
       raw: 0,
       formatted: '0',
       percentage: '0.00%',
       source: null,
-      error,
     };
   }
 }

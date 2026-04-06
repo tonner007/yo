@@ -11,6 +11,7 @@ async function getYoSDK() {
   return yoSDKPromise;
 }
 
+/** @type {`0x${string}`} */
 export let YOUSD_VAULT_ADDRESS = '0x0000000f2eb9f69274678c76222b35eec7588a65'; // Real YO USD vault address
 
 async function ensureVaultAddress() {
@@ -37,8 +38,13 @@ export async function getYoClient(network = 'ethereum') {
   return createYoClient({ chainId: getSupportedChainId(network) });
 }
 
-export function getSafeAddress(address, fallback = YOUSD_VAULT_ADDRESS) {
-  return isAddress(address) ? address : fallback;
+/**
+ * @param {string | undefined | null} address
+ * @param {`0x${string}`} [fallback]
+ * @returns {`0x${string}`}
+ */
+export function getSafeAddress(address, fallback = /** @type {`0x${string}`} */ (YOUSD_VAULT_ADDRESS)) {
+  return /** @type {`0x${string}`} */ (isAddress(address) ? address : fallback);
 }
 
 export async function formatCompactUsd(value) {
@@ -75,7 +81,6 @@ export async function getVaultSnapshotForNetwork(network = 'ethereum', vaultAddr
     
     return client.getVaultSnapshot(/** @type {`0x${string}`} */ (safeVaultAddress));
   } catch (error) {
-    console.error('[YO SDK] Failed to get vault snapshot:', error);
     throw error;
   }
 }

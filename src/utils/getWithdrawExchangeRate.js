@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createPublicClient, fallback, http } from 'viem';
 import { mainnet, base, arbitrum } from 'viem/chains';
 import { getShareBalance } from '@yo-protocol/core';

@@ -34,7 +34,6 @@ export async function getClaimableRewards(network, account) {
       source: chainRewards,
     };
   } catch (error) {
-    console.error('Failed to fetch claimable rewards:', error);
     return {
       raw: 0,
       formatted: '$0.00',

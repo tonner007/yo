@@ -4,6 +4,7 @@ import { useWallet } from "../../contexts/WalletContext";
 import { executeDeposit } from "../../utils/deposit";
 import { requestRedeem } from "../../utils/requestRedeem";
 import { getWithdrawExchangeRate } from "../../utils/getWithdrawExchangeRate";
+import { notifyError, notifySuccess } from "../../lib/notify";
 
 function floorToDecimals(value, decimals = 4) {
   const num = Number(value);
@@ -178,8 +179,8 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
           const { getTotalBalanceForNetwork } = await import("../../utils/getTotalBalance");
           const totalBalance = await getTotalBalanceForNetwork(selectedNetwork, userAddress);
           setMaxWithdrawable(floorToDecimals(totalBalance.raw ?? 0, 4));
-        } catch (error) {
-          console.error('Failed to fetch withdraw limit from Total Balance:', error);
+        } catch {
+          // Keep last known withdraw limit if refresh fails
         }
       };
       fetchWithdrawLimit();
@@ -203,8 +204,8 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
           if (defaultTab === 'deposit' && presetAmount) {
             setDepositAmount(formatFloorToDecimals(presetAmount, 4));
           }
-        } catch (error) {
-          console.error('Failed to fetch deposit limit from Available to Deposit:', error);
+        } catch {
+          // Keep last known deposit limit if refresh fails
         }
       };
       fetchDepositLimit();
@@ -239,14 +240,14 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
     if (!isValid || isSubmitting) return;
 
     if (!userAddress) {
-      alert("Please connect your wallet first");
+      notifyError("Please connect your wallet first");
       return;
     }
 
     try {
       setIsSubmitting(true);
 
-      const result = await executeDeposit({
+      await executeDeposit({
         network: selectedNetwork,
         amount,
         userAddress,
@@ -254,18 +255,15 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
         switchNetwork,
       });
 
-      // Deposit transaction completed
-
       if (onTransactionComplete) {
         onTransactionComplete();
       }
 
       onClose();
-      alert(`Deposit completed onchain. Amount: $${amount.toFixed(2)} USDC`);
+      notifySuccess(`Deposit completed onchain. Amount: $${amount.toFixed(2)} USDC`);
     } catch (error) {
       if (!isUserRejectedError(error)) {
-        console.error("Deposit failed:", error);
-        alert(error?.message || "Deposit failed. Please try again.");
+        notifyError(error?.message || "Deposit failed. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -276,7 +274,7 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
     if (!isValid || isSubmitting) return;
 
     if (!userAddress) {
-      alert("Please connect your wallet first");
+      notifyError("Please connect your wallet first");
       return;
     }
 
@@ -294,8 +292,6 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
         switchNetwork,
       });
 
-      // Withdraw transaction completed
-
       if (onTransactionComplete) {
         onTransactionComplete();
       }
@@ -304,14 +300,13 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
       const assetsOut = result?.redeemReceipt?.assetsOrRequestId != null
         ? Number(result.redeemReceipt.assetsOrRequestId) / 1_000_000
         : amount;
-      alert(`Withdraw completed onchain. Received ~$${assetsOut.toFixed(2)} USDC`);
+      notifySuccess(`Withdraw completed onchain. Received ~$${assetsOut.toFixed(2)} USDC`);
     } catch (error) {
       if (!isUserRejectedError(error)) {
-        console.error("Withdraw failed:", error);
         if (String(error?.message || '').includes('429') || String(error?.details || '').includes('429') || String(error?.message || '').toLowerCase().includes('rate limit')) {
-          alert('Base RPC je dočasně přetížené (429). Zkus Withdraw za pár sekund znovu.');
+          notifyError('Base RPC je dočasně přetížené (429). Zkus Withdraw za pár sekund znovu.');
         } else {
-          alert(error?.message || "Withdraw failed. Please try again.");
+          notifyError(error?.message || "Withdraw failed. Please try again.");
         }
       }
     } finally {

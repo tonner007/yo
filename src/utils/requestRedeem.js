@@ -81,13 +81,6 @@ export async function requestRedeem({ network = 'base', profitUsd, exchangeRateQ
       ...(fees.maxPriorityFeePerGas ? { maxPriorityFeePerGas: fees.maxPriorityFeePerGas } : {}),
     };
 
-    console.log('RequestRedeem sending tx:', {
-      to: finalRequest.to,
-      gas: finalRequest.gas.toString(),
-      maxFeePerGas: finalRequest.maxFeePerGas?.toString(),
-      maxPriorityFeePerGas: finalRequest.maxPriorityFeePerGas?.toString(),
-    });
-
     const hash = await walletClient.sendTransaction(finalRequest);
     
     // Wait for transaction receipt

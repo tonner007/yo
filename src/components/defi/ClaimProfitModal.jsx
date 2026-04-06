@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useWallet } from "../../contexts/WalletContext";
 import { executeWithdraw } from "../../utils/withdraw";
+import { notifySuccess } from "../../lib/notify";
 
 function isUserRejectedError(error) {
   const rawMessage = String(error?.message || '');
@@ -72,10 +73,9 @@ export default function ClaimProfitModal({ isOpen, onClose, profitAmount, onTran
       }
 
       onClose();
-      alert(`Profit claimed successfully! Amount: $${amount.toFixed(4)} USDC`);
+      notifySuccess(`Profit claimed successfully! Amount: $${amount.toFixed(4)} USDC`);
     } catch (error) {
       if (!isUserRejectedError(error)) {
-        console.error("Claim profit failed:", error);
         setError(error?.message || "Claim profit failed. Please try again.");
       }
     } finally {

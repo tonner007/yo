@@ -24,8 +24,7 @@ export async function getTotalTvl() {
         
         return formatTvlResult(tvlValue);
       }
-    } catch (sdkError) {
-      console.warn('YO SDK TVL fetch failed, falling back to API:', sdkError);
+    } catch {
     }
     
     // 2. Fallback na YO REST API
@@ -50,8 +49,7 @@ export async function getTotalTvl() {
     const tvlValue = parseFloat(latestTvl.tvlUsd);
     return formatTvlResult(tvlValue);
     
-  } catch (error) {
-    console.error('Error fetching TVL from YO services:', error);
+  } catch {
     
     // Pouze jako poslední fallback - v produkci bychom toto nepoužili
     return {
@@ -137,8 +135,7 @@ export async function getMultiChainTvl() {
             success: true
           };
         }
-      } catch (error) {
-        console.warn(`Failed to fetch TVL for ${chain.name}:`, error.message);
+      } catch {
       }
       
       return {
@@ -171,8 +168,7 @@ export async function getMultiChainTvl() {
       source: 'yo-api'
     };
     
-  } catch (error) {
-    console.error('Error fetching multi-chain TVL:', error);
+  } catch {
     
     // Fallback - pouze pro vývojové účely
     return {

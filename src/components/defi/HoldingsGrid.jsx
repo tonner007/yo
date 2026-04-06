@@ -8,9 +8,12 @@ import { useClaimableRewards } from "../../hooks/useClaimableRewards";
 import WithdrawDebugValues from "./WithdrawDebugValues";
 import { getWithdrawDebugValuesForNetwork } from "../../utils/getWithdrawDebugValues";
 import { requestRedeem } from "../../utils/requestRedeem";
+import { executeClaimProfit } from "../../utils/claimProfit";
 import { executeClaimRewards } from "../../utils/claimRewards";
+import { notifyError, notifySuccess } from "../../lib/notify";
 
 const DepositModal = lazy(() => import("./DepositModal"));
+const IS_DEV = Boolean(window?.location?.hostname === 'localhost' || window?.location?.hostname === '127.0.0.1');
 function isUserRejectedError(error) {
   const combined = [
     String(error?.message || ''),
@@ -93,13 +96,13 @@ export default function HoldingsGrid() {
       refreshTotalBalance();
       refreshProfit();
       refreshClaimableRewards();
+      notifySuccess('Profit claimed successfully!');
     } catch (error) {
       if (!isUserRejectedError(error)) {
-        console.error('Claim profit failed:', error);
         if (isRateLimitError(error)) {
-          alert('Base RPC je dočasně přetížené (429). Zkus Claim profit za pár sekund znovu.');
+          notifyError('Base RPC je dočasně přetížené (429). Zkus Claim profit za pár sekund znovu.');
         } else {
-          alert(error?.message || error?.shortMessage || 'Claim profit failed. Please try again.');
+          notifyError(error?.message || error?.shortMessage || 'Claim profit failed. Please try again.');
         }
       }
     } finally {
@@ -117,7 +120,9 @@ export default function HoldingsGrid() {
           const percent = parseFloat(formatted.replace('%', ''));
           setEstimatedFeePercent(percent);
         })
-        .catch(console.error);
+        .catch(() => {
+          // Ignore fee estimate refresh failures in UI
+        });
     }
   }, [userAddress, network]);
 
@@ -147,15 +152,13 @@ export default function HoldingsGrid() {
       refreshTotalBalance();
       refreshProfit();
       refreshClaimableRewards();
-      
-      alert('Profit claimed successfully!');
+      notifySuccess('Profit claimed successfully!');
     } catch (error) {
       if (!isUserRejectedError(error)) {
-        console.error('Request redeem failed:', error);
         if (isRateLimitError(error)) {
-          alert('Base RPC je dočasně přetížené (429). Zkus Claim profit za pár sekund znovu.');
+          notifyError('Base RPC je dočasně přetížené (429). Zkus Claim profit za pár sekund znovu.');
         } else {
-          alert(error?.message || error?.shortMessage || 'Claim profit failed. Please try again.');
+          notifyError(error?.message || error?.shortMessage || 'Claim profit failed. Please try again.');
         }
       }
     } finally {
@@ -181,13 +184,13 @@ export default function HoldingsGrid() {
       refreshClaimableRewards();
       refreshTotalBalance();
       refreshProfit();
+      notifySuccess('Rewards claimed successfully!');
     } catch (error) {
       if (!isUserRejectedError(error)) {
-        console.error('Claim rewards failed:', error);
         if (isRateLimitError(error)) {
-          alert('Base RPC je dočasně přetížené (429). Zkus Claim rewards za pár sekund znovu.');
+          notifyError('Base RPC je dočasně přetížené (429). Zkus Claim rewards za pár sekund znovu.');
         } else {
-          alert(error?.message || error?.shortMessage || 'Claim rewards failed. Please try again.');
+          notifyError(error?.message || error?.shortMessage || 'Claim rewards failed. Please try again.');
         }
       }
     } finally {
@@ -256,18 +259,19 @@ export default function HoldingsGrid() {
             <HoldingsCard key={item.label} {...item} />
           ))}
         </div>
-        {/* Debug values toggle */}
-        <div className="flex justify-start mt-6">
-          <button
-            onClick={() => setShowDebugValues(!showDebugValues)}
-            className="text-lg hover:opacity-80 transition-opacity"
-            title={showDebugValues ? "Skrýt debug values" : "Zobrazit debug values"}
-          >
-            {showDebugValues ? "💔" : "❤️"}
-          </button>
-        </div>
+        {IS_DEV && (
+          <div className="flex justify-start mt-6">
+            <button
+              onClick={() => setShowDebugValues(!showDebugValues)}
+              className="text-lg hover:opacity-80 transition-opacity"
+              title={showDebugValues ? "Skrýt debug values" : "Zobrazit debug values"}
+            >
+              {showDebugValues ? "💔" : "❤️"}
+            </button>
+          </div>
+        )}
       </div>
-      {showDebugValues && (
+      {IS_DEV && showDebugValues && (
         <WithdrawDebugValues userAddress={userAddress} network={network} />
       )}
       {isDepositModalOpen && (
