@@ -218,7 +218,7 @@ export default function HoldingsGrid() {
             isOpen={isDepositModalOpen} 
             onClose={() => setIsDepositModalOpen(false)}
             defaultTab={defaultModalTab}
-            presetAmount={null}
+            presetAmount={defaultModalTab === "withdraw" && totalBalanceRaw > 0 ? totalBalanceRaw.toFixed(4) : null}
             skipApproval={false}
             onTransactionComplete={() => {
               refreshTotalBalance();

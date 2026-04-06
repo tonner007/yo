@@ -123,16 +123,33 @@ export async function getTotalBalance(chainId, vaultAddress, account) {
       }
 
       const redeemValueUSD = Number(formatUnits(assets, 6));
-      const finalValueUSD = marketValueUSD > 0 ? marketValueUSD : redeemValueUSD;
+      
+      // Get maxWithdraw for the user
+      const maxWithdraw = await publicClient.readContract({
+        address: safeVaultAddress,
+        abi: [{
+          type: 'function',
+          name: 'maxWithdraw',
+          inputs: [{ name: 'owner', type: 'address' }],
+          outputs: [{ name: '', type: 'uint256' }],
+          stateMutability: 'view',
+        }],
+        functionName: 'maxWithdraw',
+        args: [account],
+      });
+      
+      const maxWithdrawUSD = Number(formatUnits(maxWithdraw, 6));
+      const finalValueUSD = maxWithdrawUSD; // Use maxWithdraw as Total Balance
       
       const result = {
         shares,
         assets,
-        formatted: `$${finalValueUSD.toFixed(2)}`,
+        formatted: `$${finalValueUSD.toFixed(4)}`,
         raw: finalValueUSD,
-        source: marketValueUSD > 0 ? 'market' : 'redeem',
+        source: 'maxWithdraw',
         redeemValue: redeemValueUSD,
-        marketValue: marketValueUSD > 0 ? marketValueUSD : null,
+        maxWithdrawValue: maxWithdrawUSD,
+        marketValue: null,
       };
 
       balanceResultCache.set(cacheKey, { value: result, timestamp: Date.now() });

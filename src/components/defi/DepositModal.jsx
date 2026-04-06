@@ -114,6 +114,14 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
   const [selectedNetwork, setSelectedNetwork] = useState("base");
   const [depositAmount, setDepositAmount] = useState(presetAmount || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [maxWithdrawable, setMaxWithdrawable] = useState(() => {
+    // Default to preset amount if available (for withdraw tab)
+    if (defaultTab === 'withdraw' && presetAmount) {
+      return Number(presetAmount);
+    }
+    return 0;
+  });
+  const [isAmountValid, setIsAmountValid] = useState(true);
 
   // Reset amount and update tab when modal opens
   useEffect(() => {
@@ -127,6 +135,33 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
 
   const amount = parseFloat(depositAmount);
   const isValid = !isNaN(amount) && amount > 0;
+
+  // Fetch maxWithdrawable when modal opens for withdraw tab
+  useEffect(() => {
+    if (isOpen && activeTab === 'withdraw' && userAddress) {
+      const fetchMaxWithdrawable = async () => {
+        try {
+          const { getWithdrawDebugValuesForNetwork } = await import("../../utils/getWithdrawDebugValues");
+          const debugValues = await getWithdrawDebugValuesForNetwork(selectedNetwork, userAddress);
+          setMaxWithdrawable(Number(debugValues.maxWithdrawableDebugFormatted?.replace(/[^0-9.]/g, '') || 0));
+        } catch (error) {
+          console.error('Failed to fetch maxWithdrawable:', error);
+        }
+      };
+      fetchMaxWithdrawable();
+    }
+  }, [isOpen, activeTab, userAddress, selectedNetwork]);
+
+  // Validate amount against maxWithdrawable
+  useEffect(() => {
+    if (activeTab === 'withdraw' && depositAmount) {
+      const amountNum = Number(depositAmount);
+      const isValidAmount = amountNum > 0 && amountNum <= maxWithdrawable;
+      setIsAmountValid(isValidAmount);
+    } else {
+      setIsAmountValid(true);
+    }
+  }, [depositAmount, maxWithdrawable, activeTab]);
 
   const handleDeposit = async () => {
     if (!isValid || isSubmitting) return;
@@ -176,19 +211,19 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
     try {
       setIsSubmitting(true);
 
-      // Get exchange rate from debug values
+      // Get exchange rate from debug values (use maxWithdraw / shares)
       const { getWithdrawDebugValuesForNetwork } = await import("../../utils/getWithdrawDebugValues");
       const debugValues = await getWithdrawDebugValuesForNetwork(selectedNetwork, userAddress);
-      const exchangeRateQuote = Number(debugValues.exchangeRateQuoteRaw ?? 0);
+      const exchangeRateMax = Number(debugValues.exchangeRateMaxRaw ?? 0);
 
-      if (!exchangeRateQuote || exchangeRateQuote <= 0) {
+      if (!exchangeRateMax || exchangeRateMax <= 0) {
         throw new Error('Exchange rate unavailable');
       }
 
       const result = await requestRedeem({
         network: selectedNetwork,
         profitUsd: amount, // User entered amount
-        exchangeRateQuote,
+        exchangeRateQuote: exchangeRateMax, // Use maxWithdraw rate
         userAddress,
         walletClient,
         switchNetwork,
@@ -280,7 +315,7 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                   placeholder="0"
-                  className="bg-transparent text-foreground text-right text-xl font-bold w-full outline-none placeholder:text-muted-foreground"
+                  className={`bg-transparent text-right text-xl font-bold w-full outline-none placeholder:text-muted-foreground ${activeTab === 'withdraw' && !isAmountValid ? 'text-red-500' : 'text-foreground'}`}
                 />
                 <div className="text-muted-foreground text-xs text-right">
                   ${isValid ? (amount).toFixed(2) : "0.00"}
@@ -292,9 +327,9 @@ export default function DepositModal({ isOpen, onClose, defaultTab = "deposit", 
           {/* Action button */}
           <button
             onClick={activeTab === "deposit" ? handleDeposit : handleWithdraw}
-            disabled={!isValid || !userAddress || isSubmitting}
+            disabled={!isValid || !userAddress || isSubmitting || (activeTab === 'withdraw' && !isAmountValid)}
             className={`w-full py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all ${
-              isValid && userAddress && !isSubmitting
+              isValid && userAddress && !isSubmitting && (activeTab !== 'withdraw' || isAmountValid)
                 ? "bg-primary text-primary-foreground hover:opacity-90"
                 : "bg-secondary text-muted-foreground cursor-not-allowed opacity-50"
             }`}
