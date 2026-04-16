@@ -4,13 +4,13 @@ Frontend pro YO vault dashboard nasazený jako statický Vite build.
 
 ## Stack
 
-- React 18
-- Vite 6
-- Tailwind CSS
+- React 18.2.0
+- Vite 8.0.8 ✅ (updated April 2026)
+- Tailwind CSS 3.4.17
 - Radix UI
-- RainbowKit + wagmi + viem
-- @tanstack/react-query
-- @yo-protocol/core
+- RainbowKit 2.2.10 + wagmi 2.19.5 + viem 2.47.6
+- @tanstack/react-query 5.96.2
+- @yo-protocol/core 1.0.10
 
 ## Co appka dělá
 
@@ -78,7 +78,12 @@ Projekt byl iterativně upravovaný, takže část struktury ještě nese histor
 - typecheck OK
 - build OK
 
-Další doporučené kroky:
+## Security
+
+- 4 vulnerabilities (2 moderate, 2 critical) - spusť `npm audit fix` pro opravu
+
+## Další doporučené kroky
+
 - sjednotit transaction flow
 - pročistit dependencies
 - zrevidovat `app-params` legacy vrstvu
